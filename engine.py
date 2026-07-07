@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Word 文档排版工具 — 排版引擎
+Word Formatter — 排版引擎
 提供 docx 格式化、doc→docx 转换、批量处理等核心功能。
 """
 
@@ -13,6 +13,7 @@ try:
     from docx import Document
     from docx.shared import Pt, Cm, Mm, Inches, RGBColor, Emu
     from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.enum.section import WD_ORIENT
     from docx.oxml.ns import qn, nsdecls
     from docx.oxml import parse_xml
     HAS_DOCX = True
@@ -154,6 +155,14 @@ def set_style_font(style, font_cn: str, font_en: str, font_size_pt: float,
     rFonts.set(qn('w:cs'), font_en)
 
 
+# ---- 纸张大小定义 (宽, 高, 单位 mm) ----
+PAPER_SIZES = {
+    "A4": (210, 297),
+    "Letter": (215.9, 279.4),
+    "A5": (148, 210),
+}
+
+
 def format_docx(filepath: str, profile: FormatProfile, progress_callback=None,
                 output_path: Optional[str] = None) -> Tuple[bool, str]:
     if output_path is None:
@@ -161,11 +170,36 @@ def format_docx(filepath: str, profile: FormatProfile, progress_callback=None,
         output_path = str(p.parent / f"{p.stem}-Revise{p.suffix}")
     try:
         doc = Document(filepath)
+        def _to_mm(val: float, unit: str) -> float:
+            return val / 10.0 if unit in ("cm", "厘米") else val
         for section in doc.sections:
-            section.top_margin = Mm(profile.page.margin_top)
-            section.bottom_margin = Mm(profile.page.margin_bottom)
-            section.left_margin = Mm(profile.page.margin_left)
-            section.right_margin = Mm(profile.page.margin_right)
+            section.top_margin = Mm(_to_mm(profile.page.margin_top, profile.page.margin_top_unit))
+            section.bottom_margin = Mm(_to_mm(profile.page.margin_bottom, profile.page.margin_bottom_unit))
+            section.left_margin = Mm(_to_mm(profile.page.margin_left, profile.page.margin_left_unit))
+            section.right_margin = Mm(_to_mm(profile.page.margin_right, profile.page.margin_right_unit))
+
+            # 页眉页脚边距
+            if profile.page.header_margin_unit in ("cm", "厘米"):
+                section.header_distance = Cm(profile.page.header_margin / 10.0)
+            else:
+                section.header_distance = Mm(profile.page.header_margin)
+            if profile.page.footer_margin_unit in ("cm", "厘米"):
+                section.footer_distance = Cm(profile.page.footer_margin / 10.0)
+            else:
+                section.footer_distance = Mm(profile.page.footer_margin)
+
+            # 纸张大小
+            ps = PAPER_SIZES.get(profile.page.paper_size, PAPER_SIZES["A4"])
+            w_mm, h_mm = ps
+            section.page_width = Mm(w_mm)
+            section.page_height = Mm(h_mm)
+
+            # 文字方向
+            if profile.page.text_direction == "横向":
+                section.orientation = WD_ORIENT.LANDSCAPE
+                # 横向时交换宽高
+                section.page_width = Mm(h_mm)
+                section.page_height = Mm(w_mm)
 
         normal_style = doc.styles['Normal']
         set_style_font(normal_style, profile.body.font_cn, profile.body.font_en,

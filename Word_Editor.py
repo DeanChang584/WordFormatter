@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Word 文档排版工具 — PyQt5 入口
+Word Formatter — PyQt5 入口
 启动 Qt 应用程序，加载主窗口。
 """
 
@@ -12,7 +12,7 @@ from main_window import MainWindow
 
 def main():
     app = QApplication(sys.argv)
-    app.setApplicationName("Word 文档排版工具")
+    app.setApplicationName("Word Formatter")
     app.setStyle("Fusion")  # 跨平台一致的现代风格
 
     window = MainWindow()

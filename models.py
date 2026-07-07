@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Word 文档排版工具 — 数据模型
+Word Formatter — 数据模型
 定义页面、正文、段落、标题样式及其配置序列化。
 """
 
@@ -35,6 +35,16 @@ class PageConfig:
         self.margin_bottom: float = 25.4
         self.margin_left: float = 31.8
         self.margin_right: float = 31.8
+        self.text_direction: str = "纵向"            # "纵向" | "横向"
+        self.paper_size: str = "A4"                   # "A4" | "Letter" | "A5"
+        self.margin_top_unit: str = "mm"
+        self.margin_bottom_unit: str = "mm"
+        self.margin_left_unit: str = "mm"
+        self.margin_right_unit: str = "mm"
+        self.header_margin: float = 15.0
+        self.header_margin_unit: str = "mm"
+        self.footer_margin: float = 17.5
+        self.footer_margin_unit: str = "mm"
 
 
 class BodyConfig:
@@ -53,15 +63,18 @@ class ParagraphConfig:
     def __init__(self):
         self.line_spacing_mode: str = "multiple"       # "multiple" | "fixed" | "at_least"
         self.line_spacing_value: float = 1.5
-        self.first_line_indent: float = 7.4             # 默认7.4mm(≈2字符)
-        self.first_line_indent_unit: str = "mm"          # "mm" | "字符"
+        self.special_format: str = "首行"                # "首行" | "悬挂"
+        self.indent_value: float = 2.0                  # 缩进量值
+        self.indent_unit: str = "ch"                    # "mm" | "pt" | "ch"
+        self.first_line_indent: float = 7.4             # 兼容旧字段
+        self.first_line_indent_unit: str = "mm"
         self.left_indent: float = 0.0
         self.left_indent_unit: str = "字符"
         self.right_indent: float = 0.0
         self.right_indent_unit: str = "字符"
         self.alignment: str = "justify"
         self.space_before: float = 0.0
-        self.space_before_unit: str = "行"               # "磅" | "行"
+        self.space_before_unit: str = "行"               # "行" | "磅"
         self.space_after: float = 0.0
         self.space_after_unit: str = "行"
 
@@ -78,6 +91,9 @@ class HeadingStyleConfig:
         self.font_bold: bool = True
         self.font_italic: bool = False
         self.alignment: str = "left"
+        self.special_format: str = "首行"                # "首行" | "悬挂"
+        self.indent_value: float = 0.0
+        self.indent_unit: str = "ch"
         self.space_before: float = 1.0                   # 默认1行
         self.space_before_unit: str = "行"
         self.space_after: float = 1.0                    # 默认1行

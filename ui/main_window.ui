@@ -11,13 +11,12 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Word 文档排版工具</string>
+   <string>Word Formatter</string>
   </property>
   <property name="styleSheet">
    <string notr="true">
 /* ============================================================
-   Word 文档排版工具 — Apple-design-analysis 样式表
-   忠实还原 Apple 官网设计语言
+   Word Formatter
    ============================================================ */
 
 /* --- 全局默认 --- */
@@ -35,13 +34,13 @@ QMainWindow, QWidget#centralwidget {
 /* --- 卡片 (QGroupBox): 纯白悬浮于 Parchment 之上 --- */
 QGroupBox {
     font-family: "Segoe UI Variable Display", "Microsoft YaHei UI";
-    font-size: 14pt;
+    font-size: 11pt;
     font-weight: 600;
     color: #1D1D1F;
     background-color: #FFFFFF;
     border: 1px solid rgba(0, 0, 0, 0.04);
     border-radius: 18px;
-    padding-top: 40px;
+    padding-top: 58px;
     padding-left: 24px;
     padding-right: 24px;
     padding-bottom: 24px;
@@ -49,8 +48,8 @@ QGroupBox {
 QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
-    left: 24px;
-    top: 14px;
+    left: 48px;
+    top: 24px;
 }
 
 /* --- 列表 --- */
@@ -73,20 +72,42 @@ QListWidget::item:selected {
     color: #1D1D1F;
 }
 
-/* --- 输入控件：干净简约 --- */
+/* --- 输入控件：干净简约 (所有首控件统一 136px) --- */
 QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {
     background-color: #FFFFFF;
     color: #1D1D1F;
     border: 1px solid #E0E0E0;
     border-radius: 8px;
-    padding: 6px 10px;
-    min-height: 24px;
+    padding: 4px 8px;
+    min-width: 136px;
+    max-width: 136px;
+    min-height: 40px;
+    max-height: 40px;
 }
 QLineEdit:hover, QSpinBox:hover, QDoubleSpinBox:hover, QComboBox:hover {
     border: 1px solid #0066CC;
 }
 QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {
     border: 1px solid #0066CC;
+}
+
+/* --- 多控件行：后续控件 96px --- */
+QDoubleSpinBox#spin_body_indent_value,
+QDoubleSpinBox#spin_heading_indent_value,
+QComboBox#combo_body_indent_unit,
+QComboBox#combo_heading_indent_unit,
+QComboBox#combo_space_before_unit,
+QComboBox#combo_space_after_unit,
+QComboBox#combo_heading_sb_unit,
+QComboBox#combo_heading_sa_unit,
+QComboBox#combo_margin_top_unit,
+QComboBox#combo_margin_bottom_unit,
+QComboBox#combo_margin_left_unit,
+QComboBox#combo_margin_right_unit,
+QComboBox#combo_header_margin_unit,
+QComboBox#combo_footer_margin_unit {
+    min-width: 96px;
+    max-width: 96px;
 }
 
 /* --- 下拉框 --- */
@@ -110,24 +131,6 @@ QPushButton:hover {
 }
 QPushButton:pressed {
     background-color: rgba(0, 102, 204, 0.08);
-}
-
-/* --- 主行动按钮 [▶ 开始排版]: 实心蓝色胶囊 --- */
-QPushButton#btn_start_format {
-    background-color: #0066CC;
-    color: #FFFFFF;
-    border: none;
-    font-family: "Segoe UI Variable Display", "Microsoft YaHei UI";
-    font-size: 13pt;
-    font-weight: 600;
-    border-radius: 9999px;
-    padding: 11px 24px;
-}
-QPushButton#btn_start_format:hover {
-    background-color: #0071E3;
-}
-QPushButton#btn_start_format:pressed {
-    background-color: #0055AA;
 }
 
 /* --- 勾选框 --- */
@@ -158,16 +161,25 @@ QScrollArea {
     border: none;
 }
 
-/* --- 滚动条: 极简 --- */
+/* --- 右栏内容: 白色背景消除灰色底座 --- */
+QWidget#right_column_content {
+    background-color: #FFFFFF;
+    border-radius: 18px;
+}
+
+/* --- 滚动条: 默认隐藏 (hover 时显示) --- */
 QScrollBar:vertical {
     background-color: transparent;
-    width: 6px;
+    width: 4px;
     margin: 0;
 }
 QScrollBar::handle:vertical {
-    background-color: rgba(0, 0, 0, 0.15);
-    border-radius: 3px;
-    min-height: 30px;
+    background-color: transparent;
+    border-radius: 2px;
+    min-height: 20px;
+}
+QScrollArea:hover QScrollBar::handle:vertical {
+    background-color: rgba(0, 0, 0, 0.12);
 }
 QScrollBar::handle:vertical:hover {
     background-color: rgba(0, 0, 0, 0.25);
@@ -190,7 +202,7 @@ QLabel#label_status {
 /* --- 页面标题 --- */
 QLabel#label_title {
     font-family: "Segoe UI Variable Display", "Microsoft YaHei UI";
-    font-size: 28pt;
+    font-size: 18pt;
     font-weight: 600;
     color: #1D1D1F;
     background-color: transparent;
@@ -204,14 +216,14 @@ QSplitter::handle {
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_root">
-    <property name="spacing"><number>24</number></property>
+    <property name="spacing"><number>32</number></property>
     <property name="leftMargin"><number>48</number></property>
     <property name="topMargin"><number>48</number></property>
     <property name="rightMargin"><number>48</number></property>
     <property name="bottomMargin"><number>48</number></property>
     <item>
      <widget class="QLabel" name="label_title">
-      <property name="text"><string>Word 文档排版工具</string></property>
+      <property name="text"><string>Word Formatter</string></property>
       <property name="alignment"><set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set></property>
      </widget>
     </item>
@@ -220,19 +232,22 @@ QSplitter::handle {
       <property name="orientation"><enum>Qt::Horizontal</enum></property>
       <property name="childrenCollapsible"><bool>false</bool></property>
       <property name="handleWidth"><number>12</number></property>
+
       <!-- ====== 左栏 ====== -->
       <widget class="QWidget" name="left_column">
-       <property name="minimumSize"><size><width>300</width><height>0</height></size></property>
+       <property name="minimumSize"><size><width>320</width><height>0</height></size></property>
        <layout class="QVBoxLayout" name="verticalLayout_left">
-        <property name="spacing"><number>48</number></property>
+        <property name="spacing"><number>32</number></property>
         <property name="leftMargin"><number>0</number></property>
         <property name="topMargin"><number>0</number></property>
-        <property name="rightMargin"><number>24</number></property>
+        <property name="rightMargin"><number>10</number></property>
         <property name="bottomMargin"><number>0</number></property>
+
+        <!-- 左上半：页面设置 -->
         <item>
          <widget class="QScrollArea" name="scroll_page">
-          <property name="minimumSize"><size><width>0</width><height>600</height></size></property>
-          <property name="maximumSize"><size><width>16777215</width><height>600</height></size></property>
+          <property name="minimumSize"><size><width>0</width><height>680</height></size></property>
+          <property name="maximumSize"><size><width>16777215</width><height>680</height></size></property>
           <property name="verticalScrollBarPolicy"><enum>Qt::ScrollBarAsNeeded</enum></property>
           <property name="horizontalScrollBarPolicy"><enum>Qt::ScrollBarAlwaysOff</enum></property>
           <property name="widgetResizable"><bool>true</bool></property>
@@ -248,20 +263,24 @@ QSplitter::handle {
               <property name="title"><string>页面设置</string></property>
               <layout class="QFormLayout" name="formLayout_page">
                <property name="labelAlignment"><set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set></property>
-               <property name="horizontalSpacing"><number>8</number></property>
-               <property name="verticalSpacing"><number>8</number></property>
+               <property name="horizontalSpacing"><number>16</number></property>
+               <property name="verticalSpacing"><number>12</number></property>
                <property name="leftMargin"><number>24</number></property>
                <property name="topMargin"><number>24</number></property>
                <property name="rightMargin"><number>24</number></property>
                <property name="bottomMargin"><number>24</number></property>
-               <item row="0" column="0"><widget class="QLabel" name="label_margin_top"><property name="text"><string>上边距</string></property></widget></item>
-               <item row="0" column="1"><widget class="QDoubleSpinBox" name="spin_margin_top"><property name="suffix"><string> mm</string></property><property name="decimals"><number>1</number></property><property name="minimum"><double>0.000000000000000</double></property><property name="maximum"><double>200.000000000000000</double></property><property name="value"><double>25.400000000000002</double></property></widget></item>
-               <item row="1" column="0"><widget class="QLabel" name="label_margin_bottom"><property name="text"><string>下边距</string></property></widget></item>
-               <item row="1" column="1"><widget class="QDoubleSpinBox" name="spin_margin_bottom"><property name="suffix"><string> mm</string></property><property name="decimals"><number>1</number></property><property name="minimum"><double>0.000000000000000</double></property><property name="maximum"><double>200.000000000000000</double></property><property name="value"><double>25.400000000000002</double></property></widget></item>
-               <item row="2" column="0"><widget class="QLabel" name="label_margin_left"><property name="text"><string>左边距</string></property></widget></item>
-               <item row="2" column="1"><widget class="QDoubleSpinBox" name="spin_margin_left"><property name="suffix"><string> mm</string></property><property name="decimals"><number>1</number></property><property name="minimum"><double>0.000000000000000</double></property><property name="maximum"><double>200.000000000000000</double></property><property name="value"><double>31.800000000000001</double></property></widget></item>
-               <item row="3" column="0"><widget class="QLabel" name="label_margin_right"><property name="text"><string>右边距</string></property></widget></item>
-               <item row="3" column="1"><widget class="QDoubleSpinBox" name="spin_margin_right"><property name="suffix"><string> mm</string></property><property name="decimals"><number>1</number></property><property name="minimum"><double>0.000000000000000</double></property><property name="maximum"><double>200.000000000000000</double></property><property name="value"><double>31.800000000000001</double></property></widget></item>
+               <item row="0" column="0"><widget class="QLabel" name="label_paper_size"><property name="text"><string>纸张大小</string></property></widget></item>
+               <item row="0" column="1"><widget class="QComboBox" name="combo_paper_size"><item><property name="text"><string>A4</string></property></item><item><property name="text"><string>Letter</string></property></item><item><property name="text"><string>A5</string></property></item></widget></item>
+               <item row="1" column="0"><widget class="QLabel" name="label_text_direction"><property name="text"><string>文字方向</string></property></widget></item>
+               <item row="1" column="1"><widget class="QComboBox" name="combo_text_direction"><item><property name="text"><string>纵向</string></property></item><item><property name="text"><string>横向</string></property></item></widget></item>
+                <item row="2" column="0"><widget class="QLabel" name="label_margin_top"><property name="text"><string>上边距</string></property></widget></item>
+                <item row="2" column="1"><layout class="QHBoxLayout" name="hLayout_margin_top"><property name="spacing"><number>16</number></property><item><widget class="QDoubleSpinBox" name="spin_margin_top"><property name="decimals"><number>1</number></property><property name="minimum"><double>0.000000000000000</double></property><property name="maximum"><double>200.000000000000000</double></property><property name="value"><double>25.400000000000002</double></property></widget></item><item><widget class="QComboBox" name="combo_margin_top_unit"><item><property name="text"><string>毫米</string></property></item><item><property name="text"><string>厘米</string></property></item></widget></item></layout></item>
+                <item row="3" column="0"><widget class="QLabel" name="label_margin_bottom"><property name="text"><string>下边距</string></property></widget></item>
+                <item row="3" column="1"><layout class="QHBoxLayout" name="hLayout_margin_bottom"><property name="spacing"><number>16</number></property><item><widget class="QDoubleSpinBox" name="spin_margin_bottom"><property name="decimals"><number>1</number></property><property name="minimum"><double>0.000000000000000</double></property><property name="maximum"><double>200.000000000000000</double></property><property name="value"><double>25.400000000000002</double></property></widget></item><item><widget class="QComboBox" name="combo_margin_bottom_unit"><item><property name="text"><string>毫米</string></property></item><item><property name="text"><string>厘米</string></property></item></widget></item></layout></item>
+                <item row="4" column="0"><widget class="QLabel" name="label_margin_left"><property name="text"><string>左边距</string></property></widget></item>
+                <item row="4" column="1"><layout class="QHBoxLayout" name="hLayout_margin_left"><property name="spacing"><number>16</number></property><item><widget class="QDoubleSpinBox" name="spin_margin_left"><property name="decimals"><number>1</number></property><property name="minimum"><double>0.000000000000000</double></property><property name="maximum"><double>200.000000000000000</double></property><property name="value"><double>31.800000000000001</double></property></widget></item><item><widget class="QComboBox" name="combo_margin_left_unit"><item><property name="text"><string>毫米</string></property></item><item><property name="text"><string>厘米</string></property></item></widget></item></layout></item>
+                <item row="5" column="0"><widget class="QLabel" name="label_margin_right"><property name="text"><string>右边距</string></property></widget></item>
+                <item row="5" column="1"><layout class="QHBoxLayout" name="hLayout_margin_right"><property name="spacing"><number>16</number></property><item><widget class="QDoubleSpinBox" name="spin_margin_right"><property name="decimals"><number>1</number></property><property name="minimum"><double>0.000000000000000</double></property><property name="maximum"><double>200.000000000000000</double></property><property name="value"><double>31.800000000000001</double></property></widget></item><item><widget class="QComboBox" name="combo_margin_right_unit"><item><property name="text"><string>毫米</string></property></item><item><property name="text"><string>厘米</string></property></item></widget></item></layout></item>
               </layout>
              </widget>
             </item>
@@ -269,36 +288,47 @@ QSplitter::handle {
           </widget>
          </widget>
         </item>
+
+        <!-- 左下半：页眉页脚 -->
         <item>
-         <widget class="QScrollArea" name="scroll_paragraph">
-          <property name="minimumSize"><size><width>0</width><height>600</height></size></property>
-          <property name="maximumSize"><size><width>16777215</width><height>600</height></size></property>
+         <widget class="QScrollArea" name="scroll_header_footer">
+          <property name="minimumSize"><size><width>0</width><height>680</height></size></property>
+          <property name="maximumSize"><size><width>16777215</width><height>680</height></size></property>
           <property name="verticalScrollBarPolicy"><enum>Qt::ScrollBarAsNeeded</enum></property>
           <property name="horizontalScrollBarPolicy"><enum>Qt::ScrollBarAlwaysOff</enum></property>
           <property name="widgetResizable"><bool>true</bool></property>
-          <widget class="QWidget" name="scroll_paragraph_content">
-           <layout class="QVBoxLayout" name="verticalLayout_scroll_paragraph">
+          <widget class="QWidget" name="scroll_header_footer_content">
+           <layout class="QVBoxLayout" name="verticalLayout_scroll_header_footer">
             <property name="spacing"><number>0</number></property>
             <property name="leftMargin"><number>0</number></property>
             <property name="topMargin"><number>0</number></property>
             <property name="rightMargin"><number>0</number></property>
             <property name="bottomMargin"><number>0</number></property>
             <item>
-             <widget class="QGroupBox" name="group_paragraph">
-              <property name="title"><string>段落设置</string></property>
-              <layout class="QVBoxLayout" name="verticalLayout_paragraph">
-               <property name="spacing"><number>8</number></property>
+             <widget class="QGroupBox" name="group_header_footer">
+              <property name="title"><string>页眉页脚</string></property>
+              <layout class="QFormLayout" name="formLayout_header_footer">
+               <property name="labelAlignment"><set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set></property>
+               <property name="horizontalSpacing"><number>16</number></property>
+               <property name="verticalSpacing"><number>12</number></property>
                <property name="leftMargin"><number>24</number></property>
                <property name="topMargin"><number>24</number></property>
                <property name="rightMargin"><number>24</number></property>
                <property name="bottomMargin"><number>24</number></property>
-               <item><layout class="QHBoxLayout" name="hLayout_line_spacing"><item><widget class="QLabel" name="label_line_mode"><property name="text"><string>行距类型</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QComboBox" name="combo_line_spacing_mode"><property name="minimumSize"><size><width>72</width><height>0</height></size></property><item><property name="text"><string>倍行距</string></property></item><item><property name="text"><string>固定值</string></property></item><item><property name="text"><string>最小值</string></property></item></widget></item><item><widget class="QLabel" name="label_line_value"><property name="text"><string>值</string></property></widget></item><item><widget class="QDoubleSpinBox" name="spin_line_spacing_value"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>2</number></property><property name="singleStep"><double>0.250000000000000</double></property><property name="maximum"><double>999.990000000000009</double></property><property name="value"><double>1.500000000000000</double></property></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_first_indent"><item><widget class="QLabel" name="label_first_indent"><property name="text"><string>首行缩进</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QDoubleSpinBox" name="spin_first_indent"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>1</number></property><property name="singleStep"><double>0.500000000000000</double></property><property name="maximum"><double>99.900000000000006</double></property><property name="value"><double>7.400000000000000</double></property></widget></item><item><widget class="QComboBox" name="combo_indent_unit"><property name="minimumSize"><size><width>50</width><height>0</height></size></property><item><property name="text"><string>mm</string></property></item><item><property name="text"><string>字符</string></property></item></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_left_indent"><item><widget class="QLabel" name="label_left_indent"><property name="text"><string>左缩进</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QDoubleSpinBox" name="spin_left_indent"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>1</number></property><property name="singleStep"><double>0.500000000000000</double></property><property name="maximum"><double>99.900000000000006</double></property></widget></item><item><widget class="QLabel" name="label_left_unit"><property name="text"><string>字符</string></property></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_right_indent"><item><widget class="QLabel" name="label_right_indent"><property name="text"><string>右缩进</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QDoubleSpinBox" name="spin_right_indent"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>1</number></property><property name="singleStep"><double>0.500000000000000</double></property><property name="maximum"><double>99.900000000000006</double></property></widget></item><item><widget class="QLabel" name="label_right_unit"><property name="text"><string>字符</string></property></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_space_before"><item><widget class="QLabel" name="label_space_before"><property name="text"><string>段前间距</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QDoubleSpinBox" name="spin_space_before"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>1</number></property><property name="singleStep"><double>0.250000000000000</double></property><property name="maximum"><double>999.000000000000000</double></property></widget></item><item><widget class="QLabel" name="label_space_before_unit"><property name="text"><string>行</string></property></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_space_after"><item><widget class="QLabel" name="label_space_after"><property name="text"><string>段后间距</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QDoubleSpinBox" name="spin_space_after"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>1</number></property><property name="singleStep"><double>0.250000000000000</double></property><property name="maximum"><double>999.000000000000000</double></property></widget></item><item><widget class="QLabel" name="label_space_after_unit"><property name="text"><string>行</string></property></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_alignment"><item><widget class="QLabel" name="label_alignment"><property name="text"><string>对齐方式</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QComboBox" name="combo_alignment"><item><property name="text"><string>左对齐</string></property></item><item><property name="text"><string>居中</string></property></item><item><property name="text"><string>右对齐</string></property></item><item><property name="text"><string>两端对齐</string></property></item><item><property name="text"><string>分散对齐</string></property></item></widget></item></layout></item>
+               <item row="0" column="0"><widget class="QLabel" name="label_header_font_cn"><property name="text"><string>中文字体</string></property></widget></item>
+               <item row="0" column="1"><widget class="QComboBox" name="combo_header_font_cn"><item><property name="text"><string>宋体</string></property></item><item><property name="text"><string>微软雅黑</string></property></item><item><property name="text"><string>黑体</string></property></item><item><property name="text"><string>仿宋</string></property></item><item><property name="text"><string>楷体</string></property></item></widget></item>
+               <item row="1" column="0"><widget class="QLabel" name="label_header_font_en"><property name="text"><string>英文字体</string></property></widget></item>
+               <item row="1" column="1"><widget class="QComboBox" name="combo_header_font_en"><item><property name="text"><string>Times New Roman</string></property></item><item><property name="text"><string>Arial</string></property></item></widget></item>
+               <item row="2" column="0"><widget class="QLabel" name="label_header_font_size"><property name="text"><string>字号大小</string></property></widget></item>
+               <item row="2" column="1"><widget class="QComboBox" name="combo_header_font_size"><item><property name="text"><string>小四</string></property></item><item><property name="text"><string>五号</string></property></item><item><property name="text"><string>小三</string></property></item><item><property name="text"><string>四号</string></property></item><item><property name="text"><string>三号</string></property></item><item><property name="text"><string>小二</string></property></item><item><property name="text"><string>二号</string></property></item></widget></item>
+               <item row="3" column="0"><widget class="QLabel" name="label_header_style"><property name="text"><string>字体样式</string></property></widget></item>
+               <item row="3" column="1"><widget class="QComboBox" name="combo_header_font_style"><item><property name="text"><string>无</string></property></item><item><property name="text"><string>加粗</string></property></item><item><property name="text"><string>倾斜</string></property></item><item><property name="text"><string>加粗倾斜</string></property></item></widget></item>
+               <item row="4" column="0"><widget class="QLabel" name="label_header_alignment"><property name="text"><string>对齐方式</string></property></widget></item>
+               <item row="4" column="1"><widget class="QComboBox" name="combo_header_alignment"><item><property name="text"><string>居中</string></property></item><item><property name="text"><string>左对齐</string></property></item><item><property name="text"><string>右对齐</string></property></item></widget></item>
+               <item row="5" column="0"><widget class="QLabel" name="label_header_margin"><property name="text"><string>页眉边距</string></property></widget></item>
+               <item row="5" column="1"><layout class="QHBoxLayout" name="hLayout_header_margin"><property name="spacing"><number>16</number></property><item><widget class="QDoubleSpinBox" name="spin_header_margin"><property name="decimals"><number>1</number></property><property name="minimum"><double>0.000000000000000</double></property><property name="maximum"><double>200.000000000000000</double></property><property name="value"><double>15.000000000000000</double></property></widget></item><item><widget class="QComboBox" name="combo_header_margin_unit"><item><property name="text"><string>毫米</string></property></item><item><property name="text"><string>厘米</string></property></item></widget></item></layout></item>
+               <item row="6" column="0"><widget class="QLabel" name="label_footer_margin"><property name="text"><string>页脚边距</string></property></widget></item>
+               <item row="6" column="1"><layout class="QHBoxLayout" name="hLayout_footer_margin"><property name="spacing"><number>16</number></property><item><widget class="QDoubleSpinBox" name="spin_footer_margin"><property name="decimals"><number>1</number></property><property name="minimum"><double>0.000000000000000</double></property><property name="maximum"><double>200.000000000000000</double></property><property name="value"><double>17.500000000000000</double></property></widget></item><item><widget class="QComboBox" name="combo_footer_margin_unit"><item><property name="text"><string>毫米</string></property></item><item><property name="text"><string>厘米</string></property></item></widget></item></layout></item>
               </layout>
              </widget>
             </item>
@@ -306,6 +336,7 @@ QSplitter::handle {
           </widget>
          </widget>
         </item>
+
         <item>
          <spacer name="spacer_left_bottom">
           <property name="orientation"><enum>Qt::Vertical</enum></property>
@@ -314,19 +345,22 @@ QSplitter::handle {
         </item>
        </layout>
       </widget>
+
       <!-- ====== 中栏 ====== -->
       <widget class="QWidget" name="middle_column">
-       <property name="minimumSize"><size><width>300</width><height>0</height></size></property>
+       <property name="minimumSize"><size><width>320</width><height>0</height></size></property>
        <layout class="QVBoxLayout" name="verticalLayout_middle">
-        <property name="spacing"><number>48</number></property>
-        <property name="leftMargin"><number>24</number></property>
+        <property name="spacing"><number>32</number></property>
+        <property name="leftMargin"><number>10</number></property>
         <property name="topMargin"><number>0</number></property>
-        <property name="rightMargin"><number>24</number></property>
+        <property name="rightMargin"><number>10</number></property>
         <property name="bottomMargin"><number>0</number></property>
+
+        <!-- 中上半：正文样式（含段落设置） -->
         <item>
          <widget class="QScrollArea" name="scroll_body">
-          <property name="minimumSize"><size><width>0</width><height>600</height></size></property>
-          <property name="maximumSize"><size><width>16777215</width><height>600</height></size></property>
+          <property name="minimumSize"><size><width>0</width><height>680</height></size></property>
+          <property name="maximumSize"><size><width>16777215</width><height>680</height></size></property>
           <property name="verticalScrollBarPolicy"><enum>Qt::ScrollBarAsNeeded</enum></property>
           <property name="horizontalScrollBarPolicy"><enum>Qt::ScrollBarAlwaysOff</enum></property>
           <property name="widgetResizable"><bool>true</bool></property>
@@ -342,8 +376,8 @@ QSplitter::handle {
               <property name="title"><string>正文样式</string></property>
               <layout class="QFormLayout" name="formLayout_body">
                <property name="labelAlignment"><set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set></property>
-               <property name="horizontalSpacing"><number>8</number></property>
-               <property name="verticalSpacing"><number>8</number></property>
+               <property name="horizontalSpacing"><number>16</number></property>
+               <property name="verticalSpacing"><number>12</number></property>
                <property name="leftMargin"><number>24</number></property>
                <property name="topMargin"><number>24</number></property>
                <property name="rightMargin"><number>24</number></property>
@@ -352,21 +386,33 @@ QSplitter::handle {
                <item row="0" column="1"><widget class="QComboBox" name="combo_body_font_cn"><item><property name="text"><string>宋体</string></property></item><item><property name="text"><string>仿宋</string></property></item><item><property name="text"><string>黑体</string></property></item><item><property name="text"><string>楷体</string></property></item><item><property name="text"><string>微软雅黑</string></property></item><item><property name="text"><string>等线</string></property></item><item><property name="text"><string>华文楷体</string></property></item><item><property name="text"><string>华文宋体</string></property></item></widget></item>
                <item row="1" column="0"><widget class="QLabel" name="label_body_font_en"><property name="text"><string>英文字体</string></property></widget></item>
                <item row="1" column="1"><widget class="QComboBox" name="combo_body_font_en"><item><property name="text"><string>Times New Roman</string></property></item><item><property name="text"><string>Arial</string></property></item><item><property name="text"><string>Calibri</string></property></item><item><property name="text"><string>Segoe UI</string></property></item><item><property name="text"><string>Georgia</string></property></item><item><property name="text"><string>Courier New</string></property></item></widget></item>
-               <item row="2" column="0"><widget class="QLabel" name="label_body_font_size"><property name="text"><string>字号</string></property></widget></item>
+               <item row="2" column="0"><widget class="QLabel" name="label_body_font_size"><property name="text"><string>字号大小</string></property></widget></item>
                <item row="2" column="1"><widget class="QComboBox" name="combo_body_font_size"><item><property name="text"><string>初号</string></property></item><item><property name="text"><string>小初</string></property></item><item><property name="text"><string>一号</string></property></item><item><property name="text"><string>小一</string></property></item><item><property name="text"><string>二号</string></property></item><item><property name="text"><string>小二</string></property></item><item><property name="text"><string>三号</string></property></item><item><property name="text"><string>小三</string></property></item><item><property name="text"><string>四号</string></property></item><item><property name="text"><string>小四</string></property></item><item><property name="text"><string>五号</string></property></item><item><property name="text"><string>小五</string></property></item></widget></item>
-               <item row="3" column="0"><widget class="QLabel" name="label_body_bold_italic"><property name="text"><string>样式</string></property></widget></item>
-               <item row="3" column="1"><layout class="QHBoxLayout" name="hLayout_body_style"><item><widget class="QCheckBox" name="check_body_bold"><property name="text"><string>加粗</string></property></widget></item><item><widget class="QCheckBox" name="check_body_italic"><property name="text"><string>斜体</string></property></widget></item></layout></item>
-              </layout>
+               <item row="3" column="0"><widget class="QLabel" name="label_body_style"><property name="text"><string>字体样式</string></property></widget></item>
+               <item row="3" column="1"><widget class="QComboBox" name="combo_body_font_style"><item><property name="text"><string>无</string></property></item><item><property name="text"><string>加粗</string></property></item><item><property name="text"><string>倾斜</string></property></item><item><property name="text"><string>加粗倾斜</string></property></item></widget></item>
+               <item row="4" column="0"><widget class="QLabel" name="label_alignment"><property name="text"><string>对齐方式</string></property></widget></item>
+               <item row="4" column="1"><widget class="QComboBox" name="combo_alignment"><item><property name="text"><string>左对齐</string></property></item><item><property name="text"><string>右对齐</string></property></item><item><property name="text"><string>居中对齐</string></property></item><item><property name="text"><string>两端对齐</string></property></item></widget></item>
+               <item row="5" column="0"><widget class="QLabel" name="label_line_mode"><property name="text"><string>行距</string></property></widget></item>
+               <item row="5" column="1"><layout class="QHBoxLayout" name="hLayout_line_spacing"><property name="spacing"><number>16</number></property><item><widget class="QDoubleSpinBox" name="spin_line_spacing_value"><property name="decimals"><number>2</number></property><property name="singleStep"><double>0.250000000000000</double></property><property name="maximum"><double>99.990000000000009</double></property><property name="value"><double>1.500000000000000</double></property></widget></item><item><widget class="QComboBox" name="combo_line_spacing_unit"><item><property name="text"><string>倍行距</string></property></item><item><property name="text"><string>固定值 磅</string></property></item></widget></item></layout></item>
+               <item row="6" column="0"><widget class="QLabel" name="label_body_special_format"><property name="text"><string>特殊格式</string></property></widget></item>
+               <item row="6" column="1"><layout class="QHBoxLayout" name="hLayout_body_special_format"><property name="spacing"><number>16</number></property><item><widget class="QComboBox" name="combo_body_special_format"><item><property name="text"><string>首行缩进</string></property></item><item><property name="text"><string>悬挂缩进</string></property></item></widget></item><item><widget class="QDoubleSpinBox" name="spin_body_indent_value"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>2</number></property><property name="singleStep"><double>0.500000000000000</double></property><property name="minimum"><double>-999.000000000000000</double></property><property name="maximum"><double>999.000000000000000</double></property><property name="value"><double>2.000000000000000</double></property></widget></item><item><widget class="QComboBox" name="combo_body_indent_unit"><item><property name="text"><string>ch</string></property></item><item><property name="text"><string>毫米</string></property></item><item><property name="text"><string>pt</string></property></item></widget></item></layout></item>
+                <item row="7" column="0"><widget class="QLabel" name="label_space_before"><property name="text"><string>段前间距</string></property></widget></item>
+                <item row="7" column="1"><layout class="QHBoxLayout" name="hLayout_body_space_before"><property name="spacing"><number>16</number></property><item><widget class="QDoubleSpinBox" name="spin_space_before"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>1</number></property><property name="singleStep"><double>0.500000000000000</double></property><property name="maximum"><double>999.000000000000000</double></property></widget></item><item><widget class="QComboBox" name="combo_space_before_unit"><item><property name="text"><string>行</string></property></item><item><property name="text"><string>磅</string></property></item></widget></item></layout></item>
+                <item row="8" column="0"><widget class="QLabel" name="label_space_after"><property name="text"><string>段后间距</string></property></widget></item>
+                <item row="8" column="1"><layout class="QHBoxLayout" name="hLayout_body_space_after"><property name="spacing"><number>16</number></property><item><widget class="QDoubleSpinBox" name="spin_space_after"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>1</number></property><property name="singleStep"><double>0.500000000000000</double></property><property name="maximum"><double>999.000000000000000</double></property></widget></item><item><widget class="QComboBox" name="combo_space_after_unit"><item><property name="text"><string>行</string></property></item><item><property name="text"><string>磅</string></property></item></widget></item></layout></item>
+               </layout>
              </widget>
             </item>
            </layout>
           </widget>
          </widget>
         </item>
+
+        <!-- 中下半：标题样式 -->
         <item>
          <widget class="QScrollArea" name="scroll_heading">
-          <property name="minimumSize"><size><width>0</width><height>600</height></size></property>
-          <property name="maximumSize"><size><width>16777215</width><height>600</height></size></property>
+          <property name="minimumSize"><size><width>0</width><height>680</height></size></property>
+          <property name="maximumSize"><size><width>16777215</width><height>680</height></size></property>
           <property name="verticalScrollBarPolicy"><enum>Qt::ScrollBarAsNeeded</enum></property>
           <property name="horizontalScrollBarPolicy"><enum>Qt::ScrollBarAlwaysOff</enum></property>
           <property name="widgetResizable"><bool>true</bool></property>
@@ -380,29 +426,40 @@ QSplitter::handle {
             <item>
              <widget class="QGroupBox" name="group_heading">
               <property name="title"><string>标题样式</string></property>
-              <layout class="QVBoxLayout" name="verticalLayout_heading">
-               <property name="spacing"><number>8</number></property>
-               <property name="leftMargin"><number>24</number></property>
-               <property name="topMargin"><number>24</number></property>
-               <property name="rightMargin"><number>24</number></property>
-               <property name="bottomMargin"><number>24</number></property>
-               <item><layout class="QHBoxLayout" name="hLayout_heading_level"><item><widget class="QLabel" name="label_heading_level"><property name="text"><string>当前</string></property></widget></item><item><widget class="QComboBox" name="combo_heading_level"><item><property name="text"><string>标题一</string></property></item><item><property name="text"><string>标题二</string></property></item><item><property name="text"><string>标题三</string></property></item><item><property name="text"><string>标题四</string></property></item><item><property name="text"><string>标题五</string></property></item><item><property name="text"><string>标题六</string></property></item></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_heading_font_cn"><item><widget class="QLabel" name="label_heading_font_cn"><property name="text"><string>中文字体</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QComboBox" name="combo_heading_font_cn"><item><property name="text"><string>黑体</string></property></item><item><property name="text"><string>宋体</string></property></item><item><property name="text"><string>仿宋</string></property></item><item><property name="text"><string>楷体</string></property></item><item><property name="text"><string>微软雅黑</string></property></item><item><property name="text"><string>等线</string></property></item></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_heading_font_en"><item><widget class="QLabel" name="label_heading_font_en"><property name="text"><string>英文字体</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QComboBox" name="combo_heading_font_en"><item><property name="text"><string>Times New Roman</string></property></item><item><property name="text"><string>Arial</string></property></item><item><property name="text"><string>Calibri</string></property></item><item><property name="text"><string>Segoe UI</string></property></item></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_heading_font_size"><item><widget class="QLabel" name="label_heading_font_size"><property name="text"><string>字号</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QComboBox" name="combo_heading_font_size"><item><property name="text"><string>初号</string></property></item><item><property name="text"><string>小初</string></property></item><item><property name="text"><string>一号</string></property></item><item><property name="text"><string>小一</string></property></item><item><property name="text"><string>二号</string></property></item><item><property name="text"><string>小二</string></property></item><item><property name="text"><string>三号</string></property></item><item><property name="text"><string>小三</string></property></item><item><property name="text"><string>四号</string></property></item><item><property name="text"><string>小四</string></property></item><item><property name="text"><string>五号</string></property></item><item><property name="text"><string>小五</string></property></item></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_heading_style"><item><widget class="QCheckBox" name="check_heading_bold"><property name="text"><string>加粗</string></property><property name="checked"><bool>true</bool></property></widget></item><item><widget class="QCheckBox" name="check_heading_italic"><property name="text"><string>斜体</string></property></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_heading_alignment"><item><widget class="QLabel" name="label_heading_alignment"><property name="text"><string>对齐</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QComboBox" name="combo_heading_alignment"><item><property name="text"><string>左对齐</string></property></item><item><property name="text"><string>居中</string></property></item><item><property name="text"><string>右对齐</string></property></item><item><property name="text"><string>两端对齐</string></property></item></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_heading_indent"><item><widget class="QLabel" name="label_heading_indent"><property name="text"><string>首行缩进</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QDoubleSpinBox" name="spin_heading_indent"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="singleStep"><double>0.500000000000000</double></property><property name="maximum"><double>99.900000000000006</double></property></widget></item><item><widget class="QLabel" name="label_heading_indent_unit"><property name="text"><string>字符</string></property></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_heading_space_before"><item><widget class="QLabel" name="label_heading_space_before"><property name="text"><string>段前</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QDoubleSpinBox" name="spin_heading_space_before"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>1</number></property><property name="singleStep"><double>0.250000000000000</double></property><property name="maximum"><double>999.000000000000000</double></property><property name="value"><double>1.000000000000000</double></property></widget></item><item><widget class="QLabel" name="label_heading_sb_unit"><property name="text"><string>行</string></property></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_heading_space_after"><item><widget class="QLabel" name="label_heading_space_after"><property name="text"><string>段后</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QDoubleSpinBox" name="spin_heading_space_after"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>1</number></property><property name="singleStep"><double>0.250000000000000</double></property><property name="maximum"><double>999.000000000000000</double></property><property name="value"><double>1.000000000000000</double></property></widget></item><item><widget class="QLabel" name="label_heading_sa_unit"><property name="text"><string>行</string></property></widget></item></layout></item>
-               <item><layout class="QHBoxLayout" name="hLayout_heading_line_spacing"><item><widget class="QLabel" name="label_heading_line_spacing"><property name="text"><string>行距</string></property><property name="minimumSize"><size><width>56</width><height>0</height></size></property></widget></item><item><widget class="QDoubleSpinBox" name="spin_heading_line_spacing"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>2</number></property><property name="singleStep"><double>0.250000000000000</double></property><property name="maximum"><double>99.990000000000009</double></property><property name="value"><double>1.500000000000000</double></property></widget></item><item><widget class="QLabel" name="label_heading_ls_unit"><property name="text"><string>行</string></property></widget></item></layout></item>
-              </layout>
+               <layout class="QFormLayout" name="formLayout_heading">
+                <property name="labelAlignment"><set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set></property>
+                <property name="horizontalSpacing"><number>16</number></property>
+                <property name="verticalSpacing"><number>12</number></property>
+                <property name="leftMargin"><number>24</number></property>
+                <property name="topMargin"><number>24</number></property>
+                <property name="rightMargin"><number>24</number></property>
+                <property name="bottomMargin"><number>24</number></property>
+                <item row="0" column="0"><widget class="QLabel" name="label_heading_level"><property name="text"><string>标题层级</string></property></widget></item>
+                <item row="0" column="1"><widget class="QComboBox" name="combo_heading_level"><item><property name="text"><string>标题一</string></property></item><item><property name="text"><string>标题二</string></property></item><item><property name="text"><string>标题三</string></property></item><item><property name="text"><string>标题四</string></property></item><item><property name="text"><string>标题五</string></property></item><item><property name="text"><string>标题六</string></property></item></widget></item>
+                <item row="1" column="0"><widget class="QLabel" name="label_heading_font_cn"><property name="text"><string>中文字体</string></property></widget></item>
+                <item row="1" column="1"><widget class="QComboBox" name="combo_heading_font_cn"><item><property name="text"><string>黑体</string></property></item><item><property name="text"><string>宋体</string></property></item><item><property name="text"><string>仿宋</string></property></item><item><property name="text"><string>楷体</string></property></item><item><property name="text"><string>微软雅黑</string></property></item><item><property name="text"><string>等线</string></property></item></widget></item>
+                <item row="2" column="0"><widget class="QLabel" name="label_heading_font_en"><property name="text"><string>英文字体</string></property></widget></item>
+                <item row="2" column="1"><widget class="QComboBox" name="combo_heading_font_en"><item><property name="text"><string>Times New Roman</string></property></item><item><property name="text"><string>Arial</string></property></item><item><property name="text"><string>Calibri</string></property></item><item><property name="text"><string>Segoe UI</string></property></item></widget></item>
+                <item row="3" column="0"><widget class="QLabel" name="label_heading_font_size"><property name="text"><string>字号大小</string></property></widget></item>
+                <item row="3" column="1"><widget class="QComboBox" name="combo_heading_font_size"><item><property name="text"><string>初号</string></property></item><item><property name="text"><string>小初</string></property></item><item><property name="text"><string>一号</string></property></item><item><property name="text"><string>小一</string></property></item><item><property name="text"><string>二号</string></property></item><item><property name="text"><string>小二</string></property></item><item><property name="text"><string>三号</string></property></item><item><property name="text"><string>小三</string></property></item><item><property name="text"><string>四号</string></property></item><item><property name="text"><string>小四</string></property></item><item><property name="text"><string>五号</string></property></item><item><property name="text"><string>小五</string></property></item></widget></item>
+                <item row="4" column="0"><widget class="QLabel" name="label_heading_style"><property name="text"><string>字体样式</string></property></widget></item>
+                <item row="4" column="1"><widget class="QComboBox" name="combo_heading_font_style"><item><property name="text"><string>无</string></property></item><item><property name="text"><string>加粗</string></property></item><item><property name="text"><string>倾斜</string></property></item><item><property name="text"><string>加粗倾斜</string></property></item></widget></item>
+                <item row="5" column="0"><widget class="QLabel" name="label_heading_alignment"><property name="text"><string>对齐方式</string></property></widget></item>
+                <item row="5" column="1"><widget class="QComboBox" name="combo_heading_alignment"><item><property name="text"><string>左对齐</string></property></item><item><property name="text"><string>右对齐</string></property></item><item><property name="text"><string>居中对齐</string></property></item><item><property name="text"><string>两端对齐</string></property></item></widget></item>
+                <item row="6" column="0"><widget class="QLabel" name="label_heading_special_format"><property name="text"><string>特殊格式</string></property></widget></item>
+                <item row="6" column="1"><layout class="QHBoxLayout" name="hLayout_heading_special_format"><property name="spacing"><number>16</number></property><item><widget class="QComboBox" name="combo_heading_special_format"><item><property name="text"><string>首行缩进</string></property></item><item><property name="text"><string>悬挂缩进</string></property></item></widget></item><item><widget class="QDoubleSpinBox" name="spin_heading_indent_value"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>2</number></property><property name="singleStep"><double>0.500000000000000</double></property><property name="minimum"><double>-999.000000000000000</double></property><property name="maximum"><double>999.000000000000000</double></property></widget></item><item><widget class="QComboBox" name="combo_heading_indent_unit"><item><property name="text"><string>ch</string></property></item><item><property name="text"><string>毫米</string></property></item><item><property name="text"><string>pt</string></property></item></widget></item></layout></item>
+                <item row="7" column="0"><widget class="QLabel" name="label_heading_space_before"><property name="text"><string>段前间距</string></property></widget></item>
+                <item row="7" column="1"><layout class="QHBoxLayout" name="hLayout_heading_space_before"><property name="spacing"><number>16</number></property><item><widget class="QDoubleSpinBox" name="spin_heading_space_before"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>1</number></property><property name="singleStep"><double>0.500000000000000</double></property><property name="maximum"><double>999.000000000000000</double></property><property name="value"><double>1.000000000000000</double></property></widget></item><item><widget class="QComboBox" name="combo_heading_sb_unit"><item><property name="text"><string>行</string></property></item><item><property name="text"><string>磅</string></property></item></widget></item></layout></item>
+                <item row="8" column="0"><widget class="QLabel" name="label_heading_space_after"><property name="text"><string>段后间距</string></property></widget></item>
+                <item row="8" column="1"><layout class="QHBoxLayout" name="hLayout_heading_space_after"><property name="spacing"><number>16</number></property><item><widget class="QDoubleSpinBox" name="spin_heading_space_after"><property name="minimumSize"><size><width>60</width><height>0</height></size></property><property name="decimals"><number>1</number></property><property name="singleStep"><double>0.500000000000000</double></property><property name="maximum"><double>999.000000000000000</double></property><property name="value"><double>1.000000000000000</double></property></widget></item><item><widget class="QComboBox" name="combo_heading_sa_unit"><item><property name="text"><string>行</string></property></item><item><property name="text"><string>磅</string></property></item></widget></item></layout></item>
+               </layout>
              </widget>
             </item>
            </layout>
           </widget>
          </widget>
         </item>
+
         <item>
          <spacer name="spacer_middle_bottom">
           <property name="orientation"><enum>Qt::Vertical</enum></property>
@@ -411,16 +468,17 @@ QSplitter::handle {
         </item>
        </layout>
       </widget>
+
       <!-- ====== 右栏 ====== -->
       <widget class="QScrollArea" name="right_column">
-       <property name="minimumSize"><size><width>400</width><height>0</height></size></property>
+       <property name="minimumSize"><size><width>360</width><height>0</height></size></property>
        <property name="verticalScrollBarPolicy"><enum>Qt::ScrollBarAsNeeded</enum></property>
        <property name="horizontalScrollBarPolicy"><enum>Qt::ScrollBarAlwaysOff</enum></property>
        <property name="widgetResizable"><bool>true</bool></property>
        <widget class="QWidget" name="right_column_content">
         <layout class="QVBoxLayout" name="verticalLayout_right">
-         <property name="spacing"><number>8</number></property>
-         <property name="leftMargin"><number>24</number></property>
+         <property name="spacing"><number>32</number></property>
+         <property name="leftMargin"><number>10</number></property>
          <property name="topMargin"><number>0</number></property>
          <property name="rightMargin"><number>0</number></property>
          <property name="bottomMargin"><number>16</number></property>
@@ -433,10 +491,10 @@ QSplitter::handle {
             <property name="topMargin"><number>24</number></property>
             <property name="rightMargin"><number>24</number></property>
             <property name="bottomMargin"><number>24</number></property>
-            <item><layout class="QHBoxLayout" name="hLayout_file_buttons"><item><widget class="QPushButton" name="btn_select_file"><property name="text"><string>📄 选择文件</string></property></widget></item><item><widget class="QPushButton" name="btn_select_folder"><property name="text"><string>📁 选择文件夹</string></property></widget></item><item><widget class="QPushButton" name="btn_clear_files"><property name="text"><string>🗑 清空</string></property></widget></item></layout></item>
+            <item><layout class="QHBoxLayout" name="hLayout_file_buttons"><property name="spacing"><number>16</number></property><item><widget class="QPushButton" name="btn_select_file"><property name="text"><string>📄 选择文件</string></property></widget></item><item><widget class="QPushButton" name="btn_select_folder"><property name="text"><string>📁 选择文件夹</string></property></widget></item></layout></item>
             <item><layout class="QHBoxLayout" name="hLayout_file_filters"><item><widget class="QLabel" name="label_filter"><property name="text"><string>格式:</string></property></widget></item><item><widget class="QCheckBox" name="check_filter_docx"><property name="text"><string>.docx</string></property><property name="checked"><bool>true</bool></property></widget></item><item><widget class="QCheckBox" name="check_filter_doc"><property name="text"><string>.doc</string></property><property name="checked"><bool>true</bool></property></widget></item></layout></item>
             <item><widget class="QListWidget" name="list_files"><property name="minimumSize"><size><width>0</width><height>400</height></size></property><property name="selectionMode"><enum>QAbstractItemView::ExtendedSelection</enum></property></widget></item>
-            <item><layout class="QHBoxLayout" name="hLayout_file_info"><item><widget class="QLabel" name="label_file_count"><property name="text"><string>已选: 0 个文件</string></property></widget></item><item><spacer name="spacer_file_info"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item><item><widget class="QPushButton" name="btn_remove_selected"><property name="text"><string>移除选中</string></property></widget></item></layout></item>
+            <item><layout class="QHBoxLayout" name="hLayout_file_info"><property name="spacing"><number>16</number></property><item><widget class="QLabel" name="label_file_count"><property name="text"><string>已选: 0 个文件</string></property></widget></item><item><spacer name="spacer_file_info"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item><item><widget class="QPushButton" name="btn_remove_selected"><property name="text"><string>移除选中</string></property></widget></item><item><widget class="QPushButton" name="btn_clear_files"><property name="text"><string>🗑 清空</string></property></widget></item></layout></item>
            </layout>
           </widget>
          </item>
@@ -449,7 +507,7 @@ QSplitter::handle {
             <property name="rightMargin"><number>0</number></property>
             <property name="bottomMargin"><number>0</number></property>
             <item><widget class="QProgressBar" name="progress_bar"><property name="value"><number>0</number></property></widget></item>
-            <item><layout class="QHBoxLayout" name="hLayout_action_buttons"><item><widget class="QPushButton" name="btn_start_format"><property name="text"><string>▶ 开始排版</string></property></widget></item><item><widget class="QPushButton" name="btn_output_dir"><property name="text"><string>📂 输出目录</string></property></widget></item><item><widget class="QPushButton" name="btn_preview_config"><property name="text"><string>📋 预览配置</string></property></widget></item></layout></item>
+            <item><layout class="QHBoxLayout" name="hLayout_action_buttons"><property name="spacing"><number>16</number></property><item><widget class="QPushButton" name="btn_start_format"><property name="text"><string>▶ 开始排版</string></property></widget></item><item><widget class="QPushButton" name="btn_output_dir"><property name="text"><string>📂 输出目录</string></property></widget></item><item><widget class="QPushButton" name="btn_preview_config"><property name="text"><string>📋 预览配置</string></property></widget></item></layout></item>
            </layout>
           </widget>
          </item>

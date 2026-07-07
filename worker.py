@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Word 文档排版工具 — 后台工作线程
+Word Formatter — 后台工作线程
 使用 QThread 在后台执行排版任务，通过信号与主线程通信。
 """
 

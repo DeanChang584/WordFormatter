@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Word 文档排版工具
+Word Formatter
 支持 .doc / .docx 双格式，兼容 MSOffice 和 WPS。
 基于 python-docx + win32com + tkinter 实现。
 """
@@ -386,7 +386,7 @@ class WordFormatterApp:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("Word 文档排版工具")
+        self.root.title("Word Formatter")
         self.root.geometry("960x720")
         self.root.minsize(960, 720)
         self.root.resizable(True, True)
@@ -428,7 +428,7 @@ class WordFormatterApp:
     def _build_ui(self):
         title_bar = ttk.Frame(self.root)
         title_bar.pack(fill=tk.X)
-        ttk.Label(title_bar, text="Word 文档排版工具",
+        ttk.Label(title_bar, text="Word Formatter",
                   font=("Segoe UI", 18, "bold")).pack(side=tk.LEFT, padx=(20, 0), pady=(10, 6))
 
         bottom_bar = ttk.Frame(self.root)

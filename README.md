@@ -1,6 +1,6 @@
-# Word 文档排版工具
+# Word Formatter
 
-基于 Python 的 Word 文档批量排版工具，支持 `.doc` / `.docx` 双格式，兼容 Microsoft Office 和 WPS。
+基于 Python 的 Word 文档批量排版工具，支持 `.doc` / `.docx` 双格式，兼容 Microsoft Office 和 WPS。原项目名称为 Word 文档排版工具，现更名为 Word Formatter。
 
 ## 功能
 

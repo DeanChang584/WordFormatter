@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Word 文档排版工具 — PyQt5 主窗口
+Word Formatter — PyQt5 主窗口
 加载 Qt Designer 生成的 .ui 文件，连接信号/槽，驱动排版引擎。
 """
 
@@ -37,11 +37,10 @@ FONT_CN_LIST = ["宋体", "仿宋", "黑体", "楷体", "微软雅黑", "等线"
 FONT_EN_LIST = ["Times New Roman", "Arial", "Calibri", "Segoe UI", "Georgia", "Courier New"]
 
 LINE_SPACING_MODE_MAP = {
-    "倍行距": "multiple",
-    "固定值": "fixed",
-    "最小值": "at_least",
+    "1.5倍行距": ("multiple", 1.5),
+    "单倍行距": ("multiple", 1.0),
+    "固定值 20pt": ("fixed", 20),
 }
-LINE_SPACING_MODE_REVERSE = {v: k for k, v in LINE_SPACING_MODE_MAP.items()}
 
 ALIGNMENT_MAP = {
     "左对齐": "left",
@@ -52,11 +51,53 @@ ALIGNMENT_MAP = {
 }
 ALIGNMENT_REVERSE = {v: k for k, v in ALIGNMENT_MAP.items()}
 
+BODY_ALIGNMENT_MAP = {
+    "左对齐": "left",
+    "右对齐": "right",
+    "居中对齐": "center",
+    "两端对齐": "justify",
+}
+BODY_ALIGNMENT_REVERSE = {v: k for k, v in BODY_ALIGNMENT_MAP.items()}
+
+HEADER_ALIGNMENT_MAP = {
+    "居中": "center",
+    "左对齐": "left",
+    "右对齐": "right",
+}
+
+HEADING_ALIGNMENT_MAP = {
+    "左对齐": "left",
+    "右对齐": "right",
+    "居中对齐": "center",
+    "两端对齐": "justify",
+}
+HEADING_ALIGNMENT_REVERSE = {v: k for k, v in HEADING_ALIGNMENT_MAP.items()}
+
+LINE_SPACING_UNIT_MAP = {
+    "倍行距": ("multiple", None),
+    "固定值 磅": ("fixed", None),
+}
+
 HEADING_LEVEL_MAP = {
     "标题一": 1, "标题二": 2, "标题三": 3,
     "标题四": 4, "标题五": 5, "标题六": 6,
 }
 HEADING_LEVEL_NAMES = list(HEADING_LEVEL_MAP.keys())
+
+# 字体样式下拉映射
+FONT_STYLE_MAP = {
+    "无": (False, False),
+    "加粗": (True, False),
+    "倾斜": (False, True),
+    "加粗倾斜": (True, True),
+}
+FONT_STYLE_NAMES = list(FONT_STYLE_MAP.keys())
+
+def font_style_to_name(bold: bool, italic: bool) -> str:
+    for name, (b, i) in FONT_STYLE_MAP.items():
+        if b == bold and i == italic:
+            return name
+    return "无"
 
 
 # ============================================================
@@ -82,7 +123,7 @@ class MainWindow(QMainWindow):
             self._show_ui_missing_error()
             return
 
-        self.setWindowTitle("Word 文档排版工具")
+        self.setWindowTitle("Word Formatter")
         self.resize(2000, 1500)
 
         # 初始化控件值
@@ -103,31 +144,42 @@ class MainWindow(QMainWindow):
         self._safe_set(self, "spin_margin_bottom", self.profile.page.margin_bottom)
         self._safe_set(self, "spin_margin_left", self.profile.page.margin_left)
         self._safe_set(self, "spin_margin_right", self.profile.page.margin_right)
+        self._safe_combo(self, "combo_margin_top_unit", ["毫米", "厘米"], self.profile.page.margin_top_unit)
+        self._safe_combo(self, "combo_margin_bottom_unit", ["毫米", "厘米"], self.profile.page.margin_bottom_unit)
+        self._safe_combo(self, "combo_margin_left_unit", ["毫米", "厘米"], self.profile.page.margin_left_unit)
+        self._safe_combo(self, "combo_margin_right_unit", ["毫米", "厘米"], self.profile.page.margin_right_unit)
+        self._safe_combo(self, "combo_text_direction", ["纵向", "横向"], self.profile.page.text_direction)
+        self._safe_combo(self, "combo_paper_size", ["A4", "Letter", "A5"], self.profile.page.paper_size)
 
-        # ---- 段落设置 ----
-        self._safe_combo(self, "combo_line_spacing_mode",
-                         list(LINE_SPACING_MODE_MAP.keys()), "倍行距")
-        self._safe_set(self, "spin_line_spacing_value", self.profile.paragraph.line_spacing_value)
+        # ---- 页眉页脚 ----
+        self._safe_combo(self, "combo_header_font_cn", ["宋体", "微软雅黑", "黑体", "仿宋", "楷体"], "宋体")
+        self._safe_combo(self, "combo_header_font_en", ["Times New Roman", "Arial"], "Times New Roman")
+        self._safe_combo(self, "combo_header_font_size", FONT_SIZE_NAMES, "小四")
+        self._safe_combo(self, "combo_header_font_style", FONT_STYLE_NAMES, "无")
+        self._safe_combo(self, "combo_header_alignment", list(HEADER_ALIGNMENT_MAP.keys()), "居中")
+        self._safe_set(self, "spin_header_margin", self.profile.page.header_margin)
+        self._safe_combo(self, "combo_header_margin_unit", ["毫米", "厘米"], self.profile.page.header_margin_unit)
+        self._safe_set(self, "spin_footer_margin", self.profile.page.footer_margin)
+        self._safe_combo(self, "combo_footer_margin_unit", ["毫米", "厘米"], self.profile.page.footer_margin_unit)
 
-        self._safe_set(self, "spin_first_indent", self.profile.paragraph.first_line_indent)
-        self._safe_combo(self, "combo_indent_unit", ["mm", "字符"],
-                         "mm" if self.profile.paragraph.first_line_indent_unit == "mm" else "字符")
-
-        self._safe_set(self, "spin_left_indent", self.profile.paragraph.left_indent)
-        self._safe_set(self, "spin_right_indent", self.profile.paragraph.right_indent)
-
-        self._safe_set(self, "spin_space_before", self.profile.paragraph.space_before)
-        self._safe_set(self, "spin_space_after", self.profile.paragraph.space_after)
-
-        self._safe_combo(self, "combo_alignment", list(ALIGNMENT_MAP.keys()), "两端对齐")
-
-        # ---- 正文样式 ----
+        # ---- 正文样式（含段落设置）----
         self._safe_combo(self, "combo_body_font_cn", FONT_CN_LIST, self.profile.body.font_cn)
         self._safe_combo(self, "combo_body_font_en", FONT_EN_LIST, self.profile.body.font_en)
         self._safe_combo(self, "combo_body_font_size", FONT_SIZE_NAMES, font_size_to_name(self.profile.body.font_size))
-        self._safe_set(self, "check_body_bold", self.profile.body.font_bold, is_bool=True)
-        self._safe_set(self, "check_body_italic", self.profile.body.font_italic, is_bool=True)
+        self._safe_combo(self, "combo_body_font_style", FONT_STYLE_NAMES,
+                         font_style_to_name(self.profile.body.font_bold, self.profile.body.font_italic))
         self._body_color = self.profile.body.font_color
+
+        self._safe_combo(self, "combo_alignment", list(BODY_ALIGNMENT_MAP.keys()), "两端对齐")
+        self._safe_set(self, "spin_line_spacing_value", self.profile.paragraph.line_spacing_value)
+        mode_name = "倍行距" if self.profile.paragraph.line_spacing_mode == "multiple" else "固定值 磅"
+        self._safe_combo(self, "combo_line_spacing_unit", list(LINE_SPACING_UNIT_MAP.keys()), mode_name)
+
+        self._safe_set(self, "spin_body_first_indent", self.profile.paragraph.first_line_indent)
+        self._safe_combo(self, "combo_body_indent_unit", ["毫米", "字符"],
+                         "毫米" if self.profile.paragraph.first_line_indent_unit in ("mm", "毫米") else "字符")
+        self._safe_set(self, "spin_space_before", self.profile.paragraph.space_before)
+        self._safe_set(self, "spin_space_after", self.profile.paragraph.space_after)
 
         # ---- 标题样式 ----
         self._safe_combo(self, "combo_heading_level", HEADING_LEVEL_NAMES, "标题一")
@@ -206,7 +258,26 @@ class MainWindow(QMainWindow):
         self._connect(self, "combo_heading_level", "currentIndexChanged", self._on_heading_level_change)
 
         # ---- 行距模式切换 ----
-        self._connect(self, "combo_line_spacing_mode", "currentTextChanged", self._on_line_mode_change)
+        self._connect(self, "combo_line_spacing_unit", "currentTextChanged", self._on_line_mode_change)
+
+        # ---- Splitter 宽度约束 ----
+        self.splitter_main.splitterMoved.connect(self._enforce_splitter_mins)
+
+    def _enforce_splitter_mins(self):
+        """拖拽后修正各栏宽度，确保不低于 minimumSize"""
+        sizes = self.splitter_main.sizes()
+        min_sizes = [
+            self.left_column.minimumSize().width(),
+            self.middle_column.minimumSize().width(),
+            self.right_column.minimumSize().width(),
+        ]
+        changed = False
+        for i in range(3):
+            if sizes[i] < min_sizes[i]:
+                sizes[i] = min_sizes[i]
+                changed = True
+        if changed:
+            self.splitter_main.setSizes(sizes)
 
     def _connect(self, obj, attr_name: str, signal_name: str, slot):
         """安全连接信号，控件不存在则跳过"""
@@ -230,12 +301,13 @@ class MainWindow(QMainWindow):
         self._safe_combo(self, "combo_heading_font_cn", FONT_CN_LIST, hd.font_cn)
         self._safe_combo(self, "combo_heading_font_en", FONT_EN_LIST, hd.font_en)
         self._safe_combo(self, "combo_heading_font_size", FONT_SIZE_NAMES, font_size_to_name(hd.font_size))
-        self._safe_set(self, "check_heading_bold", hd.font_bold, is_bool=True)
-        self._safe_set(self, "check_heading_italic", hd.font_italic, is_bool=True)
+        self._safe_combo(self, "combo_heading_font_style", FONT_STYLE_NAMES,
+                         font_style_to_name(hd.font_bold, hd.font_italic))
         self._safe_combo(self, "combo_heading_alignment",
-                         list(ALIGNMENT_MAP.keys()),
-                         ALIGNMENT_REVERSE.get(hd.alignment, "左对齐"))
+                         list(HEADING_ALIGNMENT_MAP.keys()),
+                         HEADING_ALIGNMENT_REVERSE.get(hd.alignment, "居中"))
         self._safe_set(self, "spin_heading_indent", hd.first_line_indent)
+        self._safe_combo(self, "combo_heading_indent_unit", ["毫米", "字符"], hd.first_line_indent_unit)
         self._safe_set(self, "spin_heading_space_before", hd.space_before)
         self._safe_set(self, "spin_heading_space_after", hd.space_after)
         self._safe_set(self, "spin_heading_line_spacing", hd.line_spacing_value)
@@ -258,19 +330,23 @@ class MainWindow(QMainWindow):
             hd.font_size = FONT_SIZE_MAP.get(sz_name, 12.0)
 
         # 加粗/斜体
-        cb = getattr(self, "check_heading_bold", None)
-        if cb: hd.font_bold = cb.isChecked()
-        cb = getattr(self, "check_heading_italic", None)
-        if cb: hd.font_italic = cb.isChecked()
+        combo = getattr(self, "combo_heading_font_style", None)
+        if combo:
+            style = combo.currentText()
+            bold, italic = FONT_STYLE_MAP.get(style, (False, False))
+            hd.font_bold = bold
+            hd.font_italic = italic
 
         # 对齐
         combo = getattr(self, "combo_heading_alignment", None)
         if combo:
-            hd.alignment = ALIGNMENT_MAP.get(combo.currentText(), "left")
+            hd.alignment = HEADING_ALIGNMENT_MAP.get(combo.currentText(), "left")
 
         # 数值
         spin = getattr(self, "spin_heading_indent", None)
         if spin: hd.first_line_indent = spin.value()
+        combo = getattr(self, "combo_heading_indent_unit", None)
+        if combo: hd.first_line_indent_unit = combo.currentText()
         spin = getattr(self, "spin_heading_space_before", None)
         if spin: hd.space_before = spin.value()
         spin = getattr(self, "spin_heading_space_after", None)
@@ -422,6 +498,33 @@ class MainWindow(QMainWindow):
         if spin: profile.page.margin_left = spin.value()
         spin = getattr(self, "spin_margin_right", None)
         if spin: profile.page.margin_right = spin.value()
+        combo = getattr(self, "combo_text_direction", None)
+        if combo: profile.page.text_direction = combo.currentText()
+        combo = getattr(self, "combo_paper_size", None)
+        if combo:
+            ps = combo.currentText()
+            if "A4" in ps:
+                profile.page.paper_size = "A4"
+            elif "Letter" in ps:
+                profile.page.paper_size = "Letter"
+            elif "A5" in ps:
+                profile.page.paper_size = "A5"
+        combo = getattr(self, "combo_margin_top_unit", None)
+        if combo: profile.page.margin_top_unit = combo.currentText()
+        combo = getattr(self, "combo_margin_bottom_unit", None)
+        if combo: profile.page.margin_bottom_unit = combo.currentText()
+        combo = getattr(self, "combo_margin_left_unit", None)
+        if combo: profile.page.margin_left_unit = combo.currentText()
+        combo = getattr(self, "combo_margin_right_unit", None)
+        if combo: profile.page.margin_right_unit = combo.currentText()
+        spin = getattr(self, "spin_header_margin", None)
+        if spin: profile.page.header_margin = spin.value()
+        combo = getattr(self, "combo_header_margin_unit", None)
+        if combo: profile.page.header_margin_unit = combo.currentText()
+        spin = getattr(self, "spin_footer_margin", None)
+        if spin: profile.page.footer_margin = spin.value()
+        combo = getattr(self, "combo_footer_margin_unit", None)
+        if combo: profile.page.footer_margin_unit = combo.currentText()
 
         # 正文样式
         combo = getattr(self, "combo_body_font_cn", None)
@@ -433,38 +536,36 @@ class MainWindow(QMainWindow):
             sz_name = combo.currentText()
             profile.body.font_size = FONT_SIZE_MAP.get(sz_name, 12.0)
         profile.body.font_color = self._body_color
-        cb = getattr(self, "check_body_bold", None)
-        if cb: profile.body.font_bold = cb.isChecked()
-        cb = getattr(self, "check_body_italic", None)
-        if cb: profile.body.font_italic = cb.isChecked()
-
-        # 段落设置
-        combo = getattr(self, "combo_line_spacing_mode", None)
+        combo = getattr(self, "combo_body_font_style", None)
         if combo:
-            profile.paragraph.line_spacing_mode = LINE_SPACING_MODE_MAP.get(
-                combo.currentText(), "multiple"
-            )
+            style = combo.currentText()
+            bold, italic = FONT_STYLE_MAP.get(style, (False, False))
+            profile.body.font_bold = bold
+            profile.body.font_italic = italic
+
+        # 段落设置（来自正文样式卡片）
         spin = getattr(self, "spin_line_spacing_value", None)
-        if spin: profile.paragraph.line_spacing_value = spin.value()
+        if spin:
+            profile.paragraph.line_spacing_value = spin.value()
+        combo = getattr(self, "combo_line_spacing_unit", None)
+        if combo:
+            mode = LINE_SPACING_UNIT_MAP.get(combo.currentText(), ("multiple", None))[0]
+            profile.paragraph.line_spacing_mode = mode
 
-        spin = getattr(self, "spin_first_indent", None)
+        combo = getattr(self, "combo_alignment", None)
+        if combo:
+            al_val = BODY_ALIGNMENT_MAP.get(combo.currentText(), "justify")
+            profile.paragraph.alignment = "justify" if al_val == "justify" else "first_indent"
+
+        spin = getattr(self, "spin_body_first_indent", None)
         if spin: profile.paragraph.first_line_indent = spin.value()
-        combo = getattr(self, "combo_indent_unit", None)
+        combo = getattr(self, "combo_body_indent_unit", None)
         if combo: profile.paragraph.first_line_indent_unit = combo.currentText()
-
-        spin = getattr(self, "spin_left_indent", None)
-        if spin: profile.paragraph.left_indent = spin.value()
-        spin = getattr(self, "spin_right_indent", None)
-        if spin: profile.paragraph.right_indent = spin.value()
 
         spin = getattr(self, "spin_space_before", None)
         if spin: profile.paragraph.space_before = spin.value()
         spin = getattr(self, "spin_space_after", None)
         if spin: profile.paragraph.space_after = spin.value()
-
-        combo = getattr(self, "combo_alignment", None)
-        if combo:
-            profile.paragraph.alignment = ALIGNMENT_MAP.get(combo.currentText(), "justify")
 
         # 标题样式（保存当前正在编辑的级别）
         self._save_ui_to_heading(self._current_heading_level)
