@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QListWidgetItem,
 )
 from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 from PyQt5 import uic
 
@@ -123,7 +124,8 @@ class MainWindow(QMainWindow):
             self._show_ui_missing_error()
             return
 
-        self.setWindowTitle("Word Formatter")
+        self.setWindowTitle("WordFormatter")
+        self.setWindowIcon(QIcon(str(_BASE_DIR / "WordFormatter.ico")))
         self.resize(2000, 1500)
 
         # 初始化控件值
