@@ -72,8 +72,7 @@ python Word_Editor_tkinter.py
 
 1. 点击 **选择文件** 或 **选择文件夹** 导入 Word 文档
 2. 调节左侧面板参数：页面边距、段落格式、正文字体、标题样式
-3. 可选：从预设下拉框中选择一键套用格式
-4. 点击 **开始排版**，等待进度条完成
+3. 点击 **开始排版**，等待进度条完成
 5. 排版结果保存为 `原文件名-Revise.docx`，原文件不受影响
 
 ### 常见问题
@@ -94,7 +93,7 @@ python Word_Editor_tkinter.py
 ├── worker.py               # QThread 后台工作线程
 ├── ui/main_window.ui       # Qt Designer 界面布局文件
 ├── Word_Editor_tkinter.py  # Tkinter 版本（兼容备用）
-├── format_presets.json     # 预设格式配置
+├── format_presets.json     # 格式配置参考
 ├── DESIGN.md               # Apple 设计规范参考（UI 灵感来源）
 ├── Word排版工具.spec       # PyInstaller 打包配置
 ├── requirements.txt        # 依赖列表
