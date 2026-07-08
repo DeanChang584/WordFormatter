@@ -34,8 +34,8 @@ else:
 UI_DIR = _BASE_DIR / "ui"
 UI_FILE = UI_DIR / "main_window.ui"
 
-FONT_CN_LIST = ["宋体", "仿宋", "黑体", "楷体", "微软雅黑", "等线", "华文楷体", "华文宋体"]
-FONT_EN_LIST = ["Times New Roman", "Arial", "Calibri", "Segoe UI", "Georgia", "Courier New"]
+FONT_CN_LIST = ["黑体", "微软雅黑", "等线", "宋体", "仿宋", "楷体", "华文楷体", "华文宋体"]
+FONT_EN_LIST = ["Arial", "Calibri", "Courier New", "Georgia", "Segoe UI", "Times New Roman"]
 
 LINE_SPACING_MODE_MAP = {
     "1.5倍行距": ("multiple", 1.5),
@@ -124,7 +124,7 @@ class MainWindow(QMainWindow):
             self._show_ui_missing_error()
             return
 
-        self.setWindowTitle("WordFormatter")
+        self.setWindowTitle("Word Formatter")
         self.setWindowIcon(QIcon(str(_BASE_DIR / "WordFormatter.ico")))
         self.resize(2000, 1500)
 
@@ -152,6 +152,9 @@ class MainWindow(QMainWindow):
         self._safe_combo(self, "combo_margin_right_unit", ["毫米", "厘米"], self.profile.page.margin_right_unit)
         self._safe_combo(self, "combo_text_direction", ["纵向", "横向"], self.profile.page.text_direction)
         self._safe_combo(self, "combo_paper_size", ["A4", "Letter", "A5"], self.profile.page.paper_size)
+        self._safe_combo(self, "combo_section_mode",
+                         ["全文排版", "跳过首节", "自第三节"],
+                         self.profile.page.section_mode)
 
         # ---- 页眉页脚 ----
         self._safe_combo(self, "combo_header_font_cn", ["宋体", "微软雅黑", "黑体", "仿宋", "楷体"], "宋体")
@@ -178,8 +181,8 @@ class MainWindow(QMainWindow):
         self._safe_combo(self, "combo_line_spacing_unit", list(LINE_SPACING_UNIT_MAP.keys()), mode_name)
 
         self._safe_set(self, "spin_body_first_indent", self.profile.paragraph.first_line_indent)
-        self._safe_combo(self, "combo_body_indent_unit", ["毫米", "字符"],
-                         "毫米" if self.profile.paragraph.first_line_indent_unit in ("mm", "毫米") else "字符")
+        self._safe_combo(self, "combo_body_indent_unit", ["字符", "毫米", "磅"],
+                         self.profile.paragraph.indent_unit)
         self._safe_set(self, "spin_space_before", self.profile.paragraph.space_before)
         self._safe_set(self, "spin_space_after", self.profile.paragraph.space_after)
 
@@ -502,6 +505,9 @@ class MainWindow(QMainWindow):
         if spin: profile.page.margin_right = spin.value()
         combo = getattr(self, "combo_text_direction", None)
         if combo: profile.page.text_direction = combo.currentText()
+        combo = getattr(self, "combo_section_mode", None)
+        if combo:
+            profile.page.section_mode = combo.currentText()
         combo = getattr(self, "combo_paper_size", None)
         if combo:
             ps = combo.currentText()

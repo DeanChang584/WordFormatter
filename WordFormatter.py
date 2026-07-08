@@ -14,7 +14,7 @@ from main_window import MainWindow
 
 def main():
     app = QApplication(sys.argv)
-    app.setApplicationName("WordFormatter")
+    app.setApplicationName("Word Formatter")
     app.setWindowIcon(QIcon(str(Path(__file__).parent / "WordFormatter.ico")))
     app.setStyle("Fusion")  # 跨平台一致的现代风格
 

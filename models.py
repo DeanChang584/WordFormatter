@@ -45,6 +45,7 @@ class PageConfig:
         self.header_margin_unit: str = "mm"
         self.footer_margin: float = 17.5
         self.footer_margin_unit: str = "mm"
+        self.section_mode: str = "全文排版"
 
 
 class BodyConfig:
