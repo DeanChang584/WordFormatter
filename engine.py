@@ -167,7 +167,7 @@ def format_docx(filepath: str, profile: FormatProfile, progress_callback=None,
                 output_path: Optional[str] = None) -> Tuple[bool, str]:
     if output_path is None:
         p = Path(filepath)
-        output_path = str(p.parent / f"{p.stem}-Revise{p.suffix}")
+        output_path = str(p.parent / f"{p.stem}-R{p.suffix}")
     try:
         doc = Document(filepath)
         def _to_mm(val: float, unit: str) -> float:
@@ -288,13 +288,13 @@ def process_file(filepath: str, profile: FormatProfile, progress_callback=None,
     ext = Path(filepath).suffix.lower()
     out_parent = Path(output_dir) if output_dir else Path(filepath).parent
     if ext == ".docx":
-        out_path = str(out_parent / f"{Path(filepath).stem}-Revise{Path(filepath).suffix}")
+        out_path = str(out_parent / f"{Path(filepath).stem}-R{Path(filepath).suffix}")
         return format_docx(filepath, profile, progress_callback, output_path=out_path)
     elif ext == ".doc":
         ok, msg, docx_path = convert_doc_to_docx(filepath, progress_callback)
         if not ok or docx_path is None:
             return False, msg
-        out_path = str(out_parent / f"{Path(filepath).stem}-Revise.docx")
+        out_path = str(out_parent / f"{Path(filepath).stem}-R.docx")
         ok2, msg2 = format_docx(docx_path, profile, progress_callback, output_path=out_path)
         try:
             if os.path.exists(docx_path):

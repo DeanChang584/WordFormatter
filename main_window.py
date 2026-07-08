@@ -625,20 +625,34 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "提示", "请先选择要排版的 Word 文件")
             return
 
-        out_info = (
-            f"输出目录: {self.profile.output_dir}"
-            if self.profile.output_dir
-            else "输出目录: 源文件所在目录"
-        )
         msg = (
-            f"即将排版 {len(files_to_process)} 个文件。\n\n"
-            f"排版后的文件将保存为 原文件名-Revise.docx，原文件不作任何修改。\n{out_info}\n确认继续？"
+            f"开始排版 {len(files_to_process)} 个文件\n\n"
+            f"排版后的文件名为'原文件名-R'，原文件不作任何修改。\n\n"
+            f"输出目录：原文件所在目录\n\n"
+            f"是否开始排版？"
         )
-        reply = QMessageBox.question(
-            self, "确认排版", msg,
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No
-        )
-        if reply != QMessageBox.Yes:
+
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QDialogButtonBox
+
+        dlg = QDialog(self)
+        dlg.setWindowTitle("确认排版")
+        dlg.resize(700, 400)
+        layout = QVBoxLayout(dlg)
+
+        lbl = QLabel(msg)
+        lbl.setStyleSheet("font-size: 11pt; font-weight: 400;")
+        layout.addWidget(lbl)
+
+        btn_box = QDialogButtonBox()
+        confirm_btn = QPushButton("确认")
+        cancel_btn = QPushButton("取消")
+        btn_box.addButton(confirm_btn, QDialogButtonBox.AcceptRole)
+        btn_box.addButton(cancel_btn, QDialogButtonBox.RejectRole)
+        btn_box.rejected.connect(dlg.reject)
+        btn_box.accepted.connect(dlg.accept)
+        layout.addWidget(btn_box)
+
+        if dlg.exec_() != QDialog.Accepted:
             return
 
         # 禁用开始按钮
@@ -694,30 +708,32 @@ class MainWindow(QMainWindow):
 
     def _show_result_dialog(self, results: list, summary: str):
         """排版结果对话框"""
-        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QLabel, QDialogButtonBox
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QLabel, QDialogButtonBox, QPushButton
 
         dlg = QDialog(self)
-        dlg.setWindowTitle("排版结果")
-        dlg.resize(600, 400)
+        dlg.setWindowTitle("排版成功")
+        dlg.resize(700, 400)
 
         layout = QVBoxLayout(dlg)
 
-        lbl = QLabel(summary)
-        lbl.setStyleSheet("font-size: 14px; font-weight: bold;")
+        ok_count = sum(1 for _, ok, _ in results if ok)
+        fail_count = len(results) - ok_count
+        lbl = QLabel(f"排版成功{ok_count}个，失败{fail_count}个")
+        lbl.setStyleSheet("font-size: 11pt; font-weight: 400;")
         layout.addWidget(lbl)
 
         te = QTextEdit()
         te.setReadOnly(True)
         lines = []
         for fp, ok, msg in results:
-            icon = "✓" if ok else "✗"
-            lines.append(f"[{icon}] {msg}")
-            if not ok:
-                lines.append(f"     文件: {fp}")
+            if ok:
+                lines.append(f"✓ {msg}")
         te.setPlainText("\n".join(lines))
         layout.addWidget(te)
 
-        btn_box = QDialogButtonBox(QDialogButtonBox.Ok)
+        btn_box = QDialogButtonBox()
+        exit_btn = QPushButton("退出")
+        btn_box.addButton(exit_btn, QDialogButtonBox.AcceptRole)
         btn_box.accepted.connect(dlg.accept)
         layout.addWidget(btn_box)
 

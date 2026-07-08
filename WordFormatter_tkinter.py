@@ -265,7 +265,7 @@ def format_docx(filepath: str, profile: FormatProfile, progress_callback=None,
                 output_path: Optional[str] = None) -> Tuple[bool, str]:
     if output_path is None:
         p = Path(filepath)
-        output_path = str(p.parent / f"{p.stem}-Revise{p.suffix}")
+        output_path = str(p.parent / f"{p.stem}-R{p.suffix}")
     try:
         doc = Document(filepath)
         for section in doc.sections:
@@ -353,12 +353,12 @@ def process_file(filepath: str, profile: FormatProfile, progress_callback=None,
     ext = Path(filepath).suffix.lower()
     out_parent = Path(output_dir) if output_dir else Path(filepath).parent
     if ext == ".docx":
-        out_path = str(out_parent / f"{Path(filepath).stem}-Revise{Path(filepath).suffix}")
+        out_path = str(out_parent / f"{Path(filepath).stem}-R{Path(filepath).suffix}")
         return format_docx(filepath, profile, progress_callback, output_path=out_path)
     elif ext == ".doc":
         ok, msg, docx_path = convert_doc_to_docx(filepath, progress_callback)
         if not ok or docx_path is None: return False, msg
-        out_path = str(out_parent / f"{Path(filepath).stem}-Revise.docx")
+        out_path = str(out_parent / f"{Path(filepath).stem}-R.docx")
         ok2, msg2 = format_docx(docx_path, profile, progress_callback, output_path=out_path)
         try:
             if os.path.exists(docx_path): os.remove(docx_path)
@@ -868,7 +868,7 @@ class WordFormatterApp:
         if not files_to_process:
             messagebox.showwarning("提示", "请先选择要排版的 Word 文件"); return
         out_info = f"输出目录: {self.profile.output_dir}" if self.profile.output_dir else "输出目录: 源文件所在目录"
-        msg = f"即将排版 {len(files_to_process)} 个文件。\n\n排版后的文件将保存为 原文件名-Revise.docx，原文件不作任何修改。\n{out_info}\n确认继续？"
+        msg = f"即将排版 {len(files_to_process)} 个文件。\n\n排版后的文件将保存为 原文件名-R.docx，原文件不作任何修改。\n{out_info}\n确认继续？"
         if not messagebox.askyesno("确认排版", msg): return
         self.is_running = True
         self.run_btn.configure(state=tk.DISABLED, text="排版中...")

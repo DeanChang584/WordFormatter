@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Word Formatter</string>
+   <string>WordFormatter</string>
   </property>
   <property name="styleSheet">
    <string notr="true">
@@ -22,7 +22,7 @@
 /* --- 全局默认 --- */
 * {
     font-family: "Segoe UI Variable Text", "Microsoft YaHei UI";
-    font-size: 11pt;
+    font-size: 10pt;
     color: #1D1D1F;
 }
 
@@ -34,7 +34,7 @@ QMainWindow, QWidget#centralwidget {
 /* --- 卡片 (QGroupBox): 纯白悬浮于 Parchment 之上 --- */
 QGroupBox {
     font-family: "Segoe UI Variable Display", "Microsoft YaHei UI";
-    font-size: 11pt;
+    font-size: 10pt;
     font-weight: 600;
     color: #1D1D1F;
     background-color: #FFFFFF;
@@ -155,16 +155,20 @@ QProgressBar::chunk {
     border-radius: 4px;
 }
 
+/* --- 右栏: 白色背景 + 圆角 --- */
+QScrollArea#right_column {
+    background-color: #FFFFFF;
+    border-radius: 18px;
+    border: none;
+}
+QScrollArea#right_column > QWidget > QWidget {
+    background-color: transparent;
+}
+
 /* --- 滚动区域: 透明融入底座 --- */
 QScrollArea {
     background-color: transparent;
     border: none;
-}
-
-/* --- 右栏内容: 白色背景消除灰色底座 --- */
-QWidget#right_column_content {
-    background-color: #FFFFFF;
-    border-radius: 18px;
 }
 
 /* --- 滚动条: 默认隐藏 (hover 时显示) --- */
@@ -218,12 +222,12 @@ QSplitter::handle {
    <layout class="QVBoxLayout" name="verticalLayout_root">
     <property name="spacing"><number>32</number></property>
     <property name="leftMargin"><number>48</number></property>
-    <property name="topMargin"><number>48</number></property>
+    <property name="topMargin"><number>24</number></property>
     <property name="rightMargin"><number>48</number></property>
     <property name="bottomMargin"><number>48</number></property>
     <item>
      <widget class="QLabel" name="label_title">
-      <property name="text"><string>Word Formatter</string></property>
+      <property name="text"><string>WordFormatter</string></property>
       <property name="alignment"><set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set></property>
      </widget>
     </item>
@@ -353,7 +357,7 @@ QSplitter::handle {
         <property name="spacing"><number>32</number></property>
         <property name="leftMargin"><number>10</number></property>
         <property name="topMargin"><number>0</number></property>
-        <property name="rightMargin"><number>10</number></property>
+        <property name="rightMargin"><number>20</number></property>
         <property name="bottomMargin"><number>0</number></property>
 
         <!-- 中上半：正文样式（含段落设置） -->
@@ -477,8 +481,8 @@ QSplitter::handle {
        <property name="widgetResizable"><bool>true</bool></property>
        <widget class="QWidget" name="right_column_content">
         <layout class="QVBoxLayout" name="verticalLayout_right">
-         <property name="spacing"><number>32</number></property>
-         <property name="leftMargin"><number>10</number></property>
+         <property name="spacing"><number>8</number></property>
+         <property name="leftMargin"><number>0</number></property>
          <property name="topMargin"><number>0</number></property>
          <property name="rightMargin"><number>0</number></property>
          <property name="bottomMargin"><number>16</number></property>
@@ -486,11 +490,11 @@ QSplitter::handle {
           <widget class="QGroupBox" name="group_files">
            <property name="title"><string>文件选择</string></property>
            <layout class="QVBoxLayout" name="verticalLayout_files">
-            <property name="spacing"><number>8</number></property>
+            <property name="spacing"><number>32</number></property>
             <property name="leftMargin"><number>24</number></property>
             <property name="topMargin"><number>24</number></property>
             <property name="rightMargin"><number>24</number></property>
-            <property name="bottomMargin"><number>24</number></property>
+            <property name="bottomMargin"><number>0</number></property>
             <item><layout class="QHBoxLayout" name="hLayout_file_buttons"><property name="spacing"><number>16</number></property><item><widget class="QPushButton" name="btn_select_file"><property name="text"><string>📄 选择文件</string></property></widget></item><item><widget class="QPushButton" name="btn_select_folder"><property name="text"><string>📁 选择文件夹</string></property></widget></item></layout></item>
             <item><layout class="QHBoxLayout" name="hLayout_file_filters"><item><widget class="QLabel" name="label_filter"><property name="text"><string>格式:</string></property></widget></item><item><widget class="QCheckBox" name="check_filter_docx"><property name="text"><string>.docx</string></property><property name="checked"><bool>true</bool></property></widget></item><item><widget class="QCheckBox" name="check_filter_doc"><property name="text"><string>.doc</string></property><property name="checked"><bool>true</bool></property></widget></item></layout></item>
             <item><widget class="QListWidget" name="list_files"><property name="minimumSize"><size><width>0</width><height>400</height></size></property><property name="selectionMode"><enum>QAbstractItemView::ExtendedSelection</enum></property></widget></item>
@@ -501,13 +505,13 @@ QSplitter::handle {
          <item>
           <widget class="QFrame" name="frame_actions">
            <layout class="QVBoxLayout" name="verticalLayout_actions">
-            <property name="spacing"><number>8</number></property>
-            <property name="leftMargin"><number>0</number></property>
+            <property name="spacing"><number>32</number></property>
+            <property name="leftMargin"><number>48</number></property>
             <property name="topMargin"><number>0</number></property>
-            <property name="rightMargin"><number>0</number></property>
+            <property name="rightMargin"><number>48</number></property>
             <property name="bottomMargin"><number>0</number></property>
             <item><widget class="QProgressBar" name="progress_bar"><property name="value"><number>0</number></property></widget></item>
-            <item><layout class="QHBoxLayout" name="hLayout_action_buttons"><property name="spacing"><number>16</number></property><item><widget class="QPushButton" name="btn_start_format"><property name="text"><string>▶ 开始排版</string></property></widget></item><item><widget class="QPushButton" name="btn_output_dir"><property name="text"><string>📂 输出目录</string></property></widget></item><item><widget class="QPushButton" name="btn_preview_config"><property name="text"><string>📋 预览配置</string></property></widget></item></layout></item>
+            <item><layout class="QHBoxLayout" name="hLayout_action_buttons"><property name="spacing"><number>16</number></property><item><widget class="QPushButton" name="btn_start_format"><property name="text"><string>▶ 开始排版</string></property></widget></item><item><widget class="QPushButton" name="btn_output_dir"><property name="text"><string>📂 输出目录</string></property></widget></item></layout></item>
            </layout>
           </widget>
          </item>
