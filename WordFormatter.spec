@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['Word_Editor.py'],
+    ['WordFormatter.py'],
     pathex=[],
     binaries=[],
-    datas=[('ui/main_window.ui', 'ui'), ('format_presets.json', '.')],
+    datas=[('ui/main_window.ui', 'ui'), ('format_presets.json', '.'), ('WordFormatter.png', '.')],
     hiddenimports=['PyQt5', 'pythoncom', 'win32com'],
     hookspath=[],
     hooksconfig={},
