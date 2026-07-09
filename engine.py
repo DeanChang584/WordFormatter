@@ -75,6 +75,35 @@ def _convert_indent_to_mm(value: float, unit: str, font_size_pt: float = 12.0) -
     return value
 
 
+def set_first_line_indent(paragraph, chars: float, unit: str, font_size_pt: float = 12.0):
+    """设置首行缩进：字符单位写入 XML firstLineChars，其余写入物理值"""
+    from docx.oxml import parse_xml
+    from docx.oxml.ns import qn, nsdecls
+    pPr = paragraph._element.get_or_add_pPr()
+    ind = pPr.find(qn('w:ind'))
+    if ind is None:
+        ind = parse_xml(f'<w:ind {nsdecls("w")} />')
+        pPr.append(ind)
+    for attr in ['w:firstLine', 'w:firstLineChars']:
+        if attr in ind.attrib:
+            del ind.attrib[attr]
+
+    if unit == "字符":
+        # firstLineChars 以 1/100 字符为单位，2字符 → 200
+        val = max(0, int(round(chars * 100)))
+        ind.set(qn('w:firstLineChars'), str(val))
+        # 清除物理值，防止 python-docx 保存时再生成冲突的 firstLine
+        paragraph.paragraph_format.first_line_indent = Pt(0)
+    else:
+        mm_val = _convert_indent_to_mm(chars, unit, font_size_pt)
+        if mm_val > 0:
+            paragraph.paragraph_format.first_line_indent = Mm(mm_val)
+        else:
+            # 缩写为 0 时需直接写入 XML，覆盖从父样式继承的值
+            paragraph.paragraph_format.first_line_indent = Pt(0)
+            ind.set(qn('w:firstLine'), "0")
+
+
 def _convert_space_to_pt(value: float, unit: str, font_size_pt: float = 12.0) -> float:
     """将间距值转换为 pt。行单位按当前字号换算（1行≈字号pt*1.2）"""
     if unit == "行":
@@ -95,11 +124,7 @@ def set_paragraph_format(paragraph, para_config: ParagraphConfig, font_size_pt: 
         from docx.enum.text import WD_LINE_SPACING
         pf.line_spacing_rule = WD_LINE_SPACING.AT_LEAST
 
-    first_mm = _convert_indent_to_mm(para_config.first_line_indent, para_config.first_line_indent_unit, font_size_pt)
-    if first_mm > 0:
-        pf.first_line_indent = Mm(first_mm)
-    else:
-        pf.first_line_indent = Pt(0)
+    set_first_line_indent(paragraph, para_config.first_line_indent, para_config.first_line_indent_unit, font_size_pt)
 
     left_mm = _convert_indent_to_mm(para_config.left_indent, para_config.left_indent_unit, font_size_pt)
     if left_mm > 0:
@@ -122,11 +147,7 @@ def set_style_paragraph_format(style, para_config, font_size_pt: float = 12.0):
         from docx.enum.text import WD_LINE_SPACING
         pf.line_spacing_rule = WD_LINE_SPACING.EXACTLY
 
-    if hasattr(para_config, 'first_line_indent') and para_config.first_line_indent > 0:
-        mm_val = _convert_indent_to_mm(para_config.first_line_indent, para_config.first_line_indent_unit, font_size_pt)
-        pf.first_line_indent = Mm(mm_val)
-    else:
-        pf.first_line_indent = Pt(0)
+    set_first_line_indent(style, para_config.first_line_indent, para_config.first_line_indent_unit, font_size_pt)
 
     pf.alignment = ALIGNMENT_MAP.get(para_config.alignment, WD_ALIGN_PARAGRAPH.JUSTIFY)
 

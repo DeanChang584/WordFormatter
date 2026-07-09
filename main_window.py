@@ -180,7 +180,9 @@ class MainWindow(QMainWindow):
         mode_name = "倍行距" if self.profile.paragraph.line_spacing_mode == "multiple" else "固定值 磅"
         self._safe_combo(self, "combo_line_spacing_unit", list(LINE_SPACING_UNIT_MAP.keys()), mode_name)
 
-        self._safe_set(self, "spin_body_first_indent", self.profile.paragraph.first_line_indent)
+        self._safe_combo(self, "combo_body_special_format", ["首行缩进", "悬挂缩进"],
+                         "首行缩进" if self.profile.paragraph.special_format == "首行" else "悬挂缩进")
+        self._safe_set(self, "spin_body_indent_value", self.profile.paragraph.indent_value)
         self._safe_combo(self, "combo_body_indent_unit", ["字符", "毫米", "磅"],
                          self.profile.paragraph.indent_unit)
         self._safe_set(self, "spin_space_before", self.profile.paragraph.space_before)
@@ -311,8 +313,8 @@ class MainWindow(QMainWindow):
         self._safe_combo(self, "combo_heading_alignment",
                          list(HEADING_ALIGNMENT_MAP.keys()),
                          HEADING_ALIGNMENT_REVERSE.get(hd.alignment, "居中"))
-        self._safe_set(self, "spin_heading_indent", hd.first_line_indent)
-        self._safe_combo(self, "combo_heading_indent_unit", ["毫米", "字符"], hd.first_line_indent_unit)
+        self._safe_set(self, "spin_heading_indent_value", hd.indent_value)
+        self._safe_combo(self, "combo_heading_indent_unit", ["字符", "毫米", "磅"], hd.indent_unit)
         self._safe_set(self, "spin_heading_space_before", hd.space_before)
         self._safe_set(self, "spin_heading_space_after", hd.space_after)
         self._safe_set(self, "spin_heading_line_spacing", hd.line_spacing_value)
@@ -348,10 +350,12 @@ class MainWindow(QMainWindow):
             hd.alignment = HEADING_ALIGNMENT_MAP.get(combo.currentText(), "left")
 
         # 数值
-        spin = getattr(self, "spin_heading_indent", None)
+        spin = getattr(self, "spin_heading_indent_value", None)
         if spin: hd.first_line_indent = spin.value()
         combo = getattr(self, "combo_heading_indent_unit", None)
         if combo: hd.first_line_indent_unit = combo.currentText()
+        combo2 = getattr(self, "combo_heading_special_format", None)
+        if combo2: hd.special_format = {"首行缩进": "首行", "悬挂缩进": "悬挂"}.get(combo2.currentText(), "首行")
         spin = getattr(self, "spin_heading_space_before", None)
         if spin: hd.space_before = spin.value()
         spin = getattr(self, "spin_heading_space_after", None)
@@ -562,10 +566,12 @@ class MainWindow(QMainWindow):
 
         combo = getattr(self, "combo_alignment", None)
         if combo:
-            al_val = BODY_ALIGNMENT_MAP.get(combo.currentText(), "justify")
-            profile.paragraph.alignment = "justify" if al_val == "justify" else "first_indent"
+            profile.paragraph.alignment = BODY_ALIGNMENT_MAP.get(combo.currentText(), "justify")
 
-        spin = getattr(self, "spin_body_first_indent", None)
+        combo = getattr(self, "combo_body_special_format", None)
+        if combo:
+            profile.paragraph.special_format = "首行" if combo.currentText() == "首行缩进" else "悬挂"
+        spin = getattr(self, "spin_body_indent_value", None)
         if spin: profile.paragraph.first_line_indent = spin.value()
         combo = getattr(self, "combo_body_indent_unit", None)
         if combo: profile.paragraph.first_line_indent_unit = combo.currentText()
