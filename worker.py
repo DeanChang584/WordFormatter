@@ -5,7 +5,7 @@ Word Formatter — 后台工作线程
 使用 QThread 在后台执行排版任务，通过信号与主线程通信。
 """
 
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 
 from models import FormatProfile
 from engine import process_file

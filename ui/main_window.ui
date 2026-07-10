@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>2000</width>
-    <height>1500</height>
+    <width>1840</width>
+    <height>1520</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -29,6 +29,7 @@
 /* --- Canvas: Parchment 底座 --- */
 QMainWindow, QWidget#centralwidget {
     background-color: #F5F5F7;
+    border-radius: 8px;
 }
 
 /* --- 卡片 (QGroupBox): 纯白悬浮于 Parchment 之上 --- */
@@ -89,6 +90,42 @@ QLineEdit:hover, QSpinBox:hover, QDoubleSpinBox:hover, QComboBox:hover {
 }
 QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {
     border: 1px solid #0066CC;
+}
+
+/* --- QDoubleSpinBox Fluent 风格箭头 --- */
+QDoubleSpinBox::up-button,
+QDoubleSpinBox::down-button,
+QSpinBox::up-button,
+QSpinBox::down-button {
+    width: 22px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    margin: 2px;
+}
+QDoubleSpinBox::up-button:hover,
+QDoubleSpinBox::down-button:hover,
+QSpinBox::up-button:hover,
+QSpinBox::down-button:hover {
+    background: #F3F3F3;
+}
+QDoubleSpinBox::up-button:pressed,
+QDoubleSpinBox::down-button:pressed,
+QSpinBox::up-button:pressed,
+QSpinBox::down-button:pressed {
+    background: #E8E8E8;
+}
+QDoubleSpinBox::up-arrow,
+QSpinBox::up-arrow {
+    image: url(ui/icons/arrow_up.svg);
+    width: 14px;
+    height: 10px;
+}
+QDoubleSpinBox::down-arrow,
+QSpinBox::down-arrow {
+    image: url(ui/icons/arrow_down.svg);
+    width: 14px;
+    height: 10px;
 }
 
 /* --- 多控件行：后续控件 96px --- */
@@ -192,6 +229,79 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
     height: 0px;
 }
 
+/* --- 自定义标题栏 (全透明与窗口融为一体) --- */
+QWidget#title_bar {
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
+    min-height: 80px;
+    max-height: 80px;
+}
+QWidget#title_bar QPushButton#card_tab {
+    background-color: transparent;
+    color: #6C757D;
+    border: none;
+    border-radius: 8px;
+    padding: 0px 16px;
+    margin-top: 16px;
+    font-size: 10pt;
+    font-weight: 400;
+    text-align: center;
+}
+QWidget#title_bar QPushButton#card_tab:hover {
+    background-color: #F1F3F5;
+    border: 1px solid #E9ECEF;
+}
+QWidget#title_bar QPushButton#card_tab_active {
+    background-color: #FFFFFF;
+    color: #1A1A1A;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 0px 16px;
+    margin-top: 16px;
+    font-size: 10pt;
+    font-weight: 400;
+    text-align: center;
+}
+QWidget#title_bar QPushButton#card_tab_active:hover {
+    background-color: #FFFFFF;
+}
+QWidget#title_bar QPushButton#card_add {
+    background-color: transparent;
+    color: #6C757D;
+    border: none;
+    border-radius: 8px;
+    font-size: 14pt;
+    font-weight: 400;
+}
+QWidget#title_bar QPushButton#card_add:hover {
+    background-color: #F1F3F5;
+    border: 1px solid #E9ECEF;
+}
+QWidget#title_bar QPushButton#settings_btn {
+    background-color: transparent;
+    color: #6C757D;
+    border: none;
+    border-radius: 0px;
+    font-size: 14pt;
+}
+QWidget#title_bar QPushButton#settings_btn:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+QWidget#title_bar QWidget#win_controls QPushButton {
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
+}
+QWidget#title_bar QWidget#win_controls QPushButton:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+QWidget#title_bar QWidget#win_controls QPushButton#window_close_btn:hover {
+    background-color: #E81123;
+}
+QWidget#title_bar QWidget#win_controls QPushButton#window_close_btn:hover QIcon {
+    /* close icon turns white on red background */
+}
 /* --- 状态栏 --- */
 QLabel#label_status {
     background-color: #FFFFFF;
@@ -220,11 +330,11 @@ QSplitter::handle {
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_root">
-    <property name="spacing"><number>32</number></property>
-    <property name="leftMargin"><number>48</number></property>
-    <property name="topMargin"><number>24</number></property>
-    <property name="rightMargin"><number>48</number></property>
-    <property name="bottomMargin"><number>48</number></property>
+    <property name="spacing"><number>16</number></property>
+    <property name="leftMargin"><number>32</number></property>
+    <property name="topMargin"><number>0</number></property>
+    <property name="rightMargin"><number>32</number></property>
+    <property name="bottomMargin"><number>32</number></property>
     <item>
      <widget class="QLabel" name="label_title">
       <property name="text"><string>Word Formatter</string></property>
@@ -239,12 +349,12 @@ QSplitter::handle {
 
       <!-- ====== 左栏 ====== -->
       <widget class="QWidget" name="left_column">
-       <property name="minimumSize"><size><width>320</width><height>0</height></size></property>
+       <property name="minimumSize"><size><width>450</width><height>0</height></size></property>
        <layout class="QVBoxLayout" name="verticalLayout_left">
         <property name="spacing"><number>32</number></property>
         <property name="leftMargin"><number>0</number></property>
         <property name="topMargin"><number>0</number></property>
-        <property name="rightMargin"><number>10</number></property>
+        <property name="rightMargin"><number>6</number></property>
         <property name="bottomMargin"><number>0</number></property>
 
         <!-- 左上半：页面设置 -->
@@ -354,7 +464,7 @@ QSplitter::handle {
 
       <!-- ====== 中栏 ====== -->
       <widget class="QWidget" name="middle_column">
-       <property name="minimumSize"><size><width>320</width><height>0</height></size></property>
+       <property name="minimumSize"><size><width>600</width><height>0</height></size></property>
        <layout class="QVBoxLayout" name="verticalLayout_middle">
         <property name="spacing"><number>32</number></property>
         <property name="leftMargin"><number>10</number></property>
@@ -477,7 +587,7 @@ QSplitter::handle {
 
       <!-- ====== 右栏 ====== -->
       <widget class="QScrollArea" name="right_column">
-       <property name="minimumSize"><size><width>360</width><height>0</height></size></property>
+       <property name="minimumSize"><size><width>600</width><height>0</height></size></property>
        <property name="verticalScrollBarPolicy"><enum>Qt::ScrollBarAsNeeded</enum></property>
        <property name="horizontalScrollBarPolicy"><enum>Qt::ScrollBarAlwaysOff</enum></property>
        <property name="widgetResizable"><bool>true</bool></property>
@@ -500,7 +610,7 @@ QSplitter::handle {
             <item><layout class="QHBoxLayout" name="hLayout_file_buttons"><property name="spacing"><number>16</number></property><item><widget class="QPushButton" name="btn_select_file"><property name="text"><string>📄 选择文件</string></property></widget></item><item><widget class="QPushButton" name="btn_select_folder"><property name="text"><string>📁 选择文件夹</string></property></widget></item></layout></item>
             <item><layout class="QHBoxLayout" name="hLayout_file_filters"><item><widget class="QLabel" name="label_filter"><property name="text"><string>格式:</string></property></widget></item><item><widget class="QCheckBox" name="check_filter_docx"><property name="text"><string>.docx</string></property><property name="checked"><bool>true</bool></property></widget></item><item><widget class="QCheckBox" name="check_filter_doc"><property name="text"><string>.doc</string></property><property name="checked"><bool>true</bool></property></widget></item></layout></item>
             <item><widget class="QListWidget" name="list_files"><property name="minimumSize"><size><width>0</width><height>400</height></size></property><property name="selectionMode"><enum>QAbstractItemView::ExtendedSelection</enum></property></widget></item>
-            <item><layout class="QHBoxLayout" name="hLayout_file_info"><property name="spacing"><number>16</number></property><item><widget class="QLabel" name="label_file_count"><property name="text"><string>已选: 0 个文件</string></property></widget></item><item><spacer name="spacer_file_info"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item><item><widget class="QPushButton" name="btn_remove_selected"><property name="text"><string>移除选中</string></property></widget></item><item><widget class="QPushButton" name="btn_clear_files"><property name="text"><string>🗑 清空</string></property></widget></item></layout></item>
+            <item><layout class="QHBoxLayout" name="hLayout_file_info"><property name="spacing"><number>16</number></property><item><widget class="QLabel" name="label_file_count"><property name="text"><string>已选: 0 个文件</string></property></widget></item><item><spacer name="spacer_file_info"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item><item><widget class="QPushButton" name="btn_remove_selected"><property name="text"><string>删除选中</string></property></widget></item><item><widget class="QPushButton" name="btn_clear_files"><property name="text"><string>🗑 清空</string></property></widget></item></layout></item>
            </layout>
           </widget>
          </item>

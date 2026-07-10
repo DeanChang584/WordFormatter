@@ -1,28 +1,32 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Word Formatter — PyQt5 主窗口
+Word Formatter — PyQt6 主窗口
 加载 Qt Designer 生成的 .ui 文件，连接信号/槽，驱动排版引擎。
 """
 
 import os, sys, json
 from pathlib import Path
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QMainWindow, QFileDialog, QMessageBox, QColorDialog, QApplication,
-    QListWidgetItem,
+    QListWidgetItem, QHBoxLayout, QVBoxLayout, QLabel, QPushButton,
+    QStackedWidget, QDialog, QWidget, QSizePolicy, QStyle, QMenu,
+    QDialogButtonBox, QTextEdit, QFormLayout, QComboBox,
 )
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QGraphicsDropShadowEffect
-from PyQt5 import uic
+from PyQt6.QtCore import Qt, QTimer, QPoint, QEvent, QObject
+from PyQt6.QtGui import QIcon, QPixmap, QPainter, QPainterPath, QPen, QColor
+from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+from PyQt6 import uic
 
+from frameless_window import FramelessWindow
 from models import (
     FormatProfile, ParagraphConfig, HeadingStyleConfig,
     PageConfig, BodyConfig, FONT_SIZE_MAP, FONT_SIZE_NAMES, font_size_to_name,
 )
 from engine import check_dependencies
 from worker import FormatWorker
+from theme import apply_theme, load_theme_preference, save_theme_preference, apply_dark_title_bar
 
 
 # ---- 常量 ----
@@ -105,7 +109,7 @@ def font_style_to_name(bold: bool, italic: bool) -> str:
 # 主窗口
 # ============================================================
 
-class MainWindow(QMainWindow):
+class MainWindow(FramelessWindow):
     def __init__(self):
         super().__init__()
 
@@ -116,24 +120,210 @@ class MainWindow(QMainWindow):
         self._current_heading_level: int = 1
         self._body_color: str = "#000000"
         self._heading_color: str = "#000000"
+        self._last_output_files: list = []
+        self.setAcceptDrops(True)
 
         # 加载 .ui 文件
         if UI_FILE.exists():
             uic.loadUi(str(UI_FILE), self)
+            self.setStyleSheet("")  # 清除 .ui 中的样式表，让 theme.py 的 app 级样式表生效
         else:
             self._show_ui_missing_error()
             return
 
-        self.setWindowTitle("Word Formatter")
-        self.setWindowIcon(QIcon(str(_BASE_DIR / "WordFormatter.ico")))
-        self.resize(2000, 1500)
+        self.setWindowTitle("")
+        self.resize(1840, 1520)
+
+        # 构建无边框窗口（标题栏 + 缩放区域）
+        self._build_title_bar()
+        self._install_resize_grips()
 
         # 初始化控件值
         self._init_defaults()
         # 连接信号
         self._connect_signals()
+        # 初始化主题
+        self._theme_mode = load_theme_preference()
+        self._theme_timer = QTimer(self)
+        self._theme_timer.timeout.connect(self._check_system_theme)
+        self._apply_current_theme()
         # 检查依赖
         QTimer.singleShot(100, self._check_deps)
+    # ================================================================
+    # 窗口事件
+    # ================================================================
+
+    def showEvent(self, event):
+        """窗口显示后用 DWM 设置原生圆角"""
+        super().showEvent(event)
+        try:
+            import ctypes
+            hwnd = int(self.winId())
+            DWMWA_WINDOW_CORNER_PREFERENCE = 33
+            DWMWCP_ROUND = 2
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                hwnd, DWMWA_WINDOW_CORNER_PREFERENCE,
+                ctypes.byref(ctypes.c_int(DWMWCP_ROUND)),
+                ctypes.sizeof(ctypes.c_int)
+            )
+        except Exception:
+            pass
+
+    def _build_title_bar(self):
+        """重写父类方法：构建标题栏并配置业务按钮"""
+        super()._build_title_bar()
+
+        # 配置标签页按钮的样式和信号
+        if self._title_bar and len(self._title_bar._tab_buttons) >= 3:
+            self._title_bar._tab_buttons[0].setObjectName("card_tab_active")
+            self._title_bar._tab_buttons[1].setObjectName("card_tab")
+            self._title_bar._tab_buttons[1].clicked.connect(self._show_coming_soon)
+            self._title_bar._tab_buttons[2].setObjectName("card_tab")
+
+            # "更多"按钮菜单
+            more_btn = self._title_bar._tab_buttons[2]
+            more_btn.setStyleSheet("QPushButton::menu-indicator{image: none;}")
+            more_menu = QMenu(self)
+            more_menu.setStyleSheet("QMenu::item { padding: 8px 16px; min-width: 128px; min-height: 64px; font-size: 10pt; }")
+            more_menu.addAction("设置", self._show_settings_dialog)
+            more_menu.addAction("关于", self._show_about_dialog)
+            more_btn.clicked.connect(lambda: more_menu.exec(more_btn.mapToGlobal(QPoint(0, more_btn.height()))))
+
+        # 插入到主布局顶部（替换 title 标签）
+        vbox = self.findChild(QVBoxLayout, "verticalLayout_root")
+        if vbox is not None and self._title_bar:
+            for i in range(vbox.count()):
+                item = vbox.itemAt(i)
+                if item and item.widget() and item.widget().objectName() == "label_title":
+                    vbox.insertWidget(i, self._title_bar)
+                    item.widget().hide()
+                    break
+            else:
+                vbox.insertWidget(0, self._title_bar)
+        elif self._title_bar:
+            self.centralwidget.layout().insertWidget(0, self._title_bar)
+
+    def _show_settings_dialog(self):
+        """显示设置对话框"""
+        dlg = QDialog(self)
+        dlg.setWindowTitle("设置")
+        dlg.setWindowFlags(
+            Qt.WindowType.Dialog
+            | Qt.WindowType.CustomizeWindowHint
+            | Qt.WindowType.WindowTitleHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        dlg.resize(600, 400)
+        layout = QVBoxLayout(dlg)
+
+        form = QFormLayout()
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTrailing | Qt.AlignmentFlag.AlignVCenter)
+        form.setHorizontalSpacing(16)
+        form.setVerticalSpacing(12)
+        form.setContentsMargins(24, 24, 24, 24)
+
+        label_theme = QLabel("显示外观")
+        combo_theme = QComboBox()
+        combo_theme.addItems(["跟随系统", "浅色模式", "深色模式"])
+        # 根据当前模式设置默认选中项
+        mode_index = {"system": 0, "light": 1, "dark": 2}.get(self._theme_mode, 0)
+        combo_theme.setCurrentIndex(mode_index)
+        form.addRow(label_theme, combo_theme)
+
+        layout.addLayout(form)
+        layout.addStretch()
+
+        close_btn = QPushButton("关闭")
+        close_btn.clicked.connect(dlg.accept)
+        layout.addWidget(close_btn)
+
+        # 连接信号：实时切换主题
+        combo_theme.currentIndexChanged.connect(self._on_theme_changed)
+
+        self._apply_dialog_dark_title(dlg)
+        dlg.exec()
+
+    def _on_theme_changed(self, index: int):
+        """主题下拉框切换"""
+        modes = ["system", "light", "dark"]
+        self._theme_mode = modes[index]
+        save_theme_preference(self._theme_mode)
+        self._apply_current_theme()
+
+    def _apply_current_theme(self):
+        """应用当前主题并管理跟随系统定时器"""
+        app = QApplication.instance()
+        if app is None:
+            return
+        if self._theme_mode == "system":
+            apply_theme(app, "system")
+            self._theme_timer.start(1000)  # 1秒轮询
+        else:
+            apply_theme(app, self._theme_mode)
+            self._theme_timer.stop()
+
+    def _check_system_theme(self):
+        """跟随系统模式下定时检测系统主题变化"""
+        if self._theme_mode == "system":
+            app = QApplication.instance()
+            if app:
+                apply_theme(app, "system")
+
+    def _is_dark_mode(self) -> bool:
+        """判断当前是否为深色模式"""
+        if self._theme_mode == "dark":
+            return True
+        if self._theme_mode == "system":
+            from theme import detect_system_theme
+            return detect_system_theme() == "dark"
+        return False
+
+    def _apply_dialog_dark_title(self, widget):
+        """深色模式下将对话框标题栏设为深色"""
+        if self._is_dark_mode():
+            apply_dark_title_bar(widget)
+
+    def _show_about_dialog(self):
+        """显示关于对话框"""
+        dlg = QDialog(self)
+        dlg.setWindowTitle("关于")
+        dlg.setWindowFlags(
+            Qt.WindowType.Dialog
+            | Qt.WindowType.CustomizeWindowHint
+            | Qt.WindowType.WindowTitleHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        dlg.resize(400, 250)
+        layout = QVBoxLayout(dlg)
+        label = QLabel()
+        label.setTextFormat(Qt.TextFormat.RichText)
+        label.setText(
+            '<p style="margin:0; line-height:150%;">软件名称：Word Formatter</p>'
+            '<p style="margin:0; line-height:150%;">软件版本：V 1.3</p>'
+            '<p style="margin:0; line-height:150%;">开发人员：张云殊</p>'
+        )
+        label.setStyleSheet("font-size: 10pt;")
+        layout.addWidget(label)
+        close_btn = QPushButton("关闭")
+        close_btn.clicked.connect(dlg.accept)
+        layout.addWidget(close_btn)
+        self._apply_dialog_dark_title(dlg)
+        dlg.exec()
+
+    def _show_coming_soon(self):
+        """显示功能待开发提示"""
+        box = QMessageBox(self)
+        box.setWindowFlags(
+            Qt.WindowType.Dialog
+            | Qt.WindowType.CustomizeWindowHint
+            | Qt.WindowType.WindowTitleHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        box.setIcon(QMessageBox.Icon.Information)
+        box.setWindowTitle("提示")
+        box.setText("功能待开发")
+        self._apply_dialog_dark_title(box)
+        box.exec()
 
     # ================================================================
     # 初始化默认值
@@ -255,7 +445,6 @@ class MainWindow(QMainWindow):
         # ---- 操作按钮 ----
         self._connect(self, "btn_start_format", "clicked", self._start_formatting)
         self._connect(self, "btn_output_dir", "clicked", self._select_output_dir)
-        self._connect(self, "btn_preview_config", "clicked", self._preview_config)
 
         # ---- 颜色按钮 ----
         self._connect(self, "btn_body_color", "clicked", self._pick_body_color)
@@ -421,9 +610,27 @@ class MainWindow(QMainWindow):
     # 文件操作
     # ================================================================
 
+    # ---- 拖放支持 ----
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            for url in event.mimeData().urls():
+                if url.toLocalFile().lower().endswith(('.docx', '.doc')):
+                    event.acceptProposedAction()
+                    return
+        event.ignore()
+
+    def dropEvent(self, event):
+        for url in event.mimeData().urls():
+            fp = url.toLocalFile()
+            if fp.lower().endswith(('.docx', '.doc')) and fp not in self.file_paths:
+                self.file_paths.append(fp)
+        self._refresh_file_list()
+        event.acceptProposedAction()
+
     def _select_single_file(self):
         paths, _ = QFileDialog.getOpenFileNames(
-            self, "选择 Word 文档", "",
+            self, "选择文档", "",
             "Word 文档 (*.docx *.doc);;所有文件 (*.*)"
         )
         if paths:
@@ -432,7 +639,7 @@ class MainWindow(QMainWindow):
             self._refresh_file_list()
 
     def _select_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "选择包含 Word 文档的文件夹")
+        folder = QFileDialog.getExistingDirectory(self, "选择文件夹")
         if not folder:
             return
         exts = []
@@ -451,11 +658,41 @@ class MainWindow(QMainWindow):
             self.file_paths.extend(new_files)
             self._refresh_file_list()
         else:
-            QMessageBox.information(self, "提示", "所选文件夹中未找到符合条件的 Word 文档")
+            box = QMessageBox(self)
+            box.setWindowFlags(
+                Qt.WindowType.Dialog
+                | Qt.WindowType.CustomizeWindowHint
+                | Qt.WindowType.WindowTitleHint
+                | Qt.WindowType.WindowCloseButtonHint
+            )
+            box.setIcon(QMessageBox.Icon.Information)
+            box.setWindowTitle("提示")
+            box.setText("所选文件夹中未找到符合条件的 Word 文档")
+            self._apply_dialog_dark_title(box)
+            box.exec()
 
     def _clear_files(self):
-        self.file_paths.clear()
-        self._refresh_file_list()
+        if not self.file_paths:
+            return
+        dlg = QDialog(self)
+        dlg.setWindowTitle("确认清空")
+        dlg.setFixedSize(400, 250)
+        layout = QVBoxLayout(dlg)
+        label = QLabel("确认是否清空所有文档？")
+        label.setStyleSheet("font-size: 10pt; line-height: 125%; padding-bottom: 8px;")
+        layout.addWidget(label)
+        btn_box = QDialogButtonBox()
+        yes_btn = QPushButton("是")
+        no_btn = QPushButton("否")
+        btn_box.addButton(yes_btn, QDialogButtonBox.ButtonRole.AcceptRole)
+        btn_box.addButton(no_btn, QDialogButtonBox.ButtonRole.RejectRole)
+        btn_box.accepted.connect(dlg.accept)
+        btn_box.rejected.connect(dlg.reject)
+        layout.addWidget(btn_box)
+        self._apply_dialog_dark_title(dlg)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            self.file_paths.clear()
+            self._refresh_file_list()
 
     def _remove_selected_files(self):
         lst = getattr(self, "list_files", None)
@@ -591,38 +828,33 @@ class MainWindow(QMainWindow):
     # ================================================================
 
     def _select_output_dir(self):
-        folder = QFileDialog.getExistingDirectory(self, "选择排版后文件的输出目录")
+        """选择输出目录，或在资源管理器中高亮显示已生成的输出文件"""
+        import subprocess
+        if self._last_output_files:
+            # 有已生成的文件，在资源管理器中高亮第一个
+            subprocess.run(["explorer", "/select,", self._last_output_files[0]])
+            return
+        folder = QFileDialog.getExistingDirectory(self, "选择输出目录")
         if folder:
             self.profile.output_dir = folder
             self._safe_set(self, "label_status", f"输出目录: {folder}", is_label=True)
 
-    def _preview_config(self):
-        """弹窗显示当前配置的 JSON 预览"""
-        profile = self._collect_profile_from_ui()
-        d = profile.to_dict()
-        text = json.dumps(d, indent=2, ensure_ascii=False)
-
-        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QDialogButtonBox
-        dlg = QDialog(self)
-        dlg.setWindowTitle("排版配置预览")
-        dlg.resize(500, 500)
-        layout = QVBoxLayout(dlg)
-
-        te = QTextEdit()
-        te.setReadOnly(True)
-        te.setPlainText(text)
-        layout.addWidget(te)
-
-        btn_box = QDialogButtonBox(QDialogButtonBox.Ok)
-        btn_box.accepted.connect(dlg.accept)
-        layout.addWidget(btn_box)
-
-        dlg.exec_()
-
     def _start_formatting(self):
         """开始排版"""
         if self._worker and self._worker.isRunning():
-            QMessageBox.warning(self, "提示", "排版任务正在运行中")
+            box = QMessageBox(self)
+            box.setWindowFlags(
+                Qt.WindowType.Dialog
+                | Qt.WindowType.CustomizeWindowHint
+                | Qt.WindowType.WindowTitleHint
+                | Qt.WindowType.WindowCloseButtonHint
+            )
+            box.resize(800, 600)
+            box.setIcon(QMessageBox.Icon.Warning)
+            box.setWindowTitle("提示")
+            box.setText("排版任务正在运行中")
+            self._apply_dialog_dark_title(box)
+            box.exec()
             return
 
         self.profile = self._collect_profile_from_ui()
@@ -636,7 +868,18 @@ class MainWindow(QMainWindow):
 
         files_to_process = [f for f in self.file_paths if Path(f).suffix.lower() in exts]
         if not files_to_process:
-            QMessageBox.warning(self, "提示", "请先选择要排版的 Word 文件")
+            dlg = QDialog(self)
+            dlg.setWindowTitle("排版提示")
+            dlg.setFixedSize(400, 250)
+            layout = QVBoxLayout(dlg)
+            label = QLabel("请选择排版文档")
+            label.setStyleSheet("font-size: 10pt; line-height: 125%; padding-bottom: 8px;")
+            layout.addWidget(label)
+            exit_btn = QPushButton("退出")
+            exit_btn.clicked.connect(dlg.accept)
+            layout.addWidget(exit_btn)
+            self._apply_dialog_dark_title(dlg)
+            dlg.exec()
             return
 
         msg = (
@@ -646,27 +889,39 @@ class MainWindow(QMainWindow):
             f"是否开始排版？"
         )
 
-        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QDialogButtonBox
-
         dlg = QDialog(self)
         dlg.setWindowTitle("确认排版")
-        dlg.resize(700, 400)
+        dlg.setWindowFlags(
+            Qt.WindowType.Dialog
+            | Qt.WindowType.CustomizeWindowHint
+            | Qt.WindowType.WindowTitleHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        dlg.resize(600, 400)
         layout = QVBoxLayout(dlg)
 
-        lbl = QLabel(msg)
-        lbl.setStyleSheet("font-size: 11pt; font-weight: 400;")
+        lbl = QLabel()
+        lbl.setTextFormat(Qt.TextFormat.RichText)
+        lbl.setText(
+            f'<p style="margin:0; line-height:150%;">开始排版 {len(files_to_process)} 个文件</p>'
+            f'<p style="margin:0; line-height:150%;">排版后的文件名为"原文件名-R"，原文件不作任何修改。</p>'
+            f'<p style="margin:0; line-height:150%;">输出目录：原文件所在目录</p>'
+            f'<p style="margin:0; line-height:150%;">是否开始排版？</p>'
+        )
+        lbl.setStyleSheet("font-size: 10pt; font-weight: 400;")
         layout.addWidget(lbl)
 
         btn_box = QDialogButtonBox()
         confirm_btn = QPushButton("确认")
         cancel_btn = QPushButton("取消")
-        btn_box.addButton(confirm_btn, QDialogButtonBox.AcceptRole)
-        btn_box.addButton(cancel_btn, QDialogButtonBox.RejectRole)
+        btn_box.addButton(confirm_btn, QDialogButtonBox.ButtonRole.AcceptRole)
+        btn_box.addButton(cancel_btn, QDialogButtonBox.ButtonRole.RejectRole)
         btn_box.rejected.connect(dlg.reject)
         btn_box.accepted.connect(dlg.accept)
         layout.addWidget(btn_box)
 
-        if dlg.exec_() != QDialog.Accepted:
+        self._apply_dialog_dark_title(dlg)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
             return
 
         # 禁用开始按钮
@@ -696,7 +951,18 @@ class MainWindow(QMainWindow):
         self._safe_set(self, "progress_bar", pct, is_progress=True)
 
     def _on_worker_error(self, err_msg: str):
-        QMessageBox.critical(self, "错误", err_msg)
+        box = QMessageBox(self)
+        box.setWindowFlags(
+            Qt.WindowType.Dialog
+            | Qt.WindowType.CustomizeWindowHint
+            | Qt.WindowType.WindowTitleHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        box.setIcon(QMessageBox.Icon.Critical)
+        box.setWindowTitle("错误")
+        box.setText(err_msg)
+        self._apply_dialog_dark_title(box)
+        box.exec()
         self._safe_set(self, "label_status", "排版出错", is_label=True)
         btn = getattr(self, "btn_start_format", None)
         if btn:
@@ -711,6 +977,18 @@ class MainWindow(QMainWindow):
             btn.setEnabled(True)
             btn.setText("▶ 开始排版")
 
+        # 记录输出文件路径
+        from pathlib import Path as _Path
+        self._last_output_files = []
+        for fp, ok, msg in results:
+            if ok:
+                p = _Path(fp)
+                if self.profile.output_dir:
+                    out = str(_Path(self.profile.output_dir) / f"{p.stem}-R{p.suffix}")
+                else:
+                    out = str(p.parent / f"{p.stem}-R{p.suffix}")
+                self._last_output_files.append(out)
+
         ok_count = sum(1 for _, ok, _ in results if ok)
         total = len(results)
         summary = f"排版完成！成功: {ok_count}, 失败: {total - ok_count}"
@@ -722,18 +1000,24 @@ class MainWindow(QMainWindow):
 
     def _show_result_dialog(self, results: list, summary: str):
         """排版结果对话框"""
-        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QLabel, QDialogButtonBox, QPushButton
-
         dlg = QDialog(self)
         dlg.setWindowTitle("排版成功")
-        dlg.resize(700, 400)
+        dlg.setWindowFlags(
+            Qt.WindowType.Dialog
+            | Qt.WindowType.CustomizeWindowHint
+            | Qt.WindowType.WindowTitleHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        dlg.resize(800, 600)
 
         layout = QVBoxLayout(dlg)
 
         ok_count = sum(1 for _, ok, _ in results if ok)
         fail_count = len(results) - ok_count
-        lbl = QLabel(f"排版成功{ok_count}个，失败{fail_count}个")
-        lbl.setStyleSheet("font-size: 11pt; font-weight: 400;")
+        lbl = QLabel()
+        lbl.setTextFormat(Qt.TextFormat.RichText)
+        lbl.setText(f'<p style="margin:0; line-height:150%;">排版成功{ok_count}个，失败{fail_count}个</p>')
+        lbl.setStyleSheet("font-size: 10pt; font-weight: 400;")
         layout.addWidget(lbl)
 
         te = QTextEdit()
@@ -747,11 +1031,12 @@ class MainWindow(QMainWindow):
 
         btn_box = QDialogButtonBox()
         exit_btn = QPushButton("退出")
-        btn_box.addButton(exit_btn, QDialogButtonBox.AcceptRole)
+        btn_box.addButton(exit_btn, QDialogButtonBox.ButtonRole.AcceptRole)
         btn_box.accepted.connect(dlg.accept)
         layout.addWidget(btn_box)
 
-        dlg.exec_()
+        self._apply_dialog_dark_title(dlg)
+        dlg.exec()
 
     # ================================================================
     # 依赖检查 & 错误提示
@@ -761,17 +1046,34 @@ class MainWindow(QMainWindow):
         """检查依赖库"""
         missing = check_dependencies()
         if missing:
-            msg = f"缺少依赖库: {', '.join(missing)}\n\n请运行: pip install {' '.join(missing)}"
-            QMessageBox.warning(self, "依赖缺失", msg)
+            text = f"缺少依赖库: {', '.join(missing)}\n\n请运行: pip install {' '.join(missing)}"
+            box = QMessageBox(self)
+            box.setWindowFlags(
+                Qt.WindowType.Dialog
+                | Qt.WindowType.CustomizeWindowHint
+                | Qt.WindowType.WindowTitleHint
+                | Qt.WindowType.WindowCloseButtonHint
+            )
+            box.setIcon(QMessageBox.Icon.Warning)
+            box.setWindowTitle("依赖缺失")
+            box.setText(text)
+            self._apply_dialog_dark_title(box)
+            box.exec()
 
     def _show_ui_missing_error(self):
         """.ui 文件不存在时显示错误提示"""
         err = QMessageBox(self)
-        err.setIcon(QMessageBox.Critical)
+        err.setWindowFlags(
+            Qt.WindowType.Dialog
+            | Qt.WindowType.CustomizeWindowHint
+            | Qt.WindowType.WindowTitleHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        err.setIcon(QMessageBox.Icon.Critical)
         err.setWindowTitle("界面文件缺失")
         err.setText(
             f"未找到 UI 界面文件:\n{UI_FILE}\n\n"
             f"请使用 Qt Designer 创建界面文件后保存到 ui/main_window.ui\n"
             f"控件命名规范请参考代码注释。"
         )
-        err.exec_()
+        err.exec()
