@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "WordFormatterUI (Unpackaged)": {
+      "commandName": "Project"
+    },
+    "WordFormatterUI (Package)": {
+      "commandName": "MsixPackage"
+    }
+  }
+}

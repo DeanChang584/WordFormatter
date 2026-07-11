@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="WordFormatterUI.Pages.FormatPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Loaded="Page_Loaded">
+
+    <Grid Padding="24,16,24,16" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="开始排版" />
+
+        <!-- Output Dir -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+            <TextBlock VerticalAlignment="Center" Text="输出目录（留空则保存到源文件目录）：" />
+            <Button
+                Click="PickOutputDir_Click"
+                Content="选择…" />
+        </StackPanel>
+
+        <!-- Format Actions -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
+            <Button
+                x:Name="StartBtn"
+                Click="StartFormat_Click"
+                Content="开始排版"
+                Style="{StaticResource AccentButtonStyle}" />
+            <Button
+                x:Name="CancelBtn"
+                Click="CancelFormat_Click"
+                Content="取消"
+                IsEnabled="False" />
+            <TextBlock
+                x:Name="StatusText"
+                VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
+
+        <!-- Progress -->
+        <StackPanel Grid.Row="2" VerticalAlignment="Bottom" Spacing="8" Padding="0,60,0,0">
+            <ProgressBar
+                x:Name="ProgressBar"
+                Minimum="0"
+                Maximum="100"
+                Visibility="Collapsed" />
+            <TextBlock
+                x:Name="ProgressText"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Visibility="Collapsed" />
+        </StackPanel>
+
+        <!-- Results -->
+        <ListView
+            x:Name="ResultsList"
+            Grid.Row="3"
+            Visibility="Collapsed">
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                    <TextBlock
+                        Margin="0,2"
+                        IsTextSelectionEnabled="True"
+                        Text="{x:Bind}"
+                        TextTrimming="CharacterEllipsis" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Summary -->
+        <StackPanel
+            x:Name="SummaryPanel"
+            Grid.Row="4"
+            Orientation="Horizontal"
+            Spacing="16"
+            Visibility="Collapsed">
+            <TextBlock x:Name="SummaryText" Style="{StaticResource BodyStrongTextBlockStyle}" />
+        </StackPanel>
+    </Grid>
+</Page>

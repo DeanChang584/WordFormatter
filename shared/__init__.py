@@ -1,0 +1,1 @@
+# Shared DTOs between frontend and backend

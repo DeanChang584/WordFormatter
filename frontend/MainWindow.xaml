@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Window
+    x:Class="WordFormatterUI.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="Word Formatter"
+    mc:Ignorable="d">
+
+    <NavigationView
+        x:Name="NavView"
+        IsBackButtonVisible="Collapsed"
+        IsPaneToggleButtonVisible="True"
+        IsSettingsVisible="True"
+        SelectionChanged="NavView_SelectionChanged">
+        <NavigationView.MenuItems>
+            <NavigationViewItem
+                Content="文件管理"
+                IsSelected="True"
+                Tag="files">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8B7;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="排版配置" Tag="profile">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8A9;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="开始排版" Tag="format">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE768;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+        </NavigationView.MenuItems>
+        <Frame x:Name="NavFrame" />
+    </NavigationView>
+</Window>

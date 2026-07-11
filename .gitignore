@@ -21,6 +21,14 @@ Thumbs.db
 # Temp files
 *.tmp
 *.log
+_test.txt
+
+# WinUI 3 / MSIX
+frontend/bin/
+frontend/obj/
+frontend/AppPackages/
+*.msix
+*.appx
 
 # Testing
 .pytest_cache/
