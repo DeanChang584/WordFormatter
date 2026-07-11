@@ -23,6 +23,12 @@ Thumbs.db
 *.log
 _test.txt
 
+# Runtime data directories
+logs/
+cache/
+temp/
+output/
+
 # WinUI 3 / MSIX
 frontend/bin/
 frontend/obj/

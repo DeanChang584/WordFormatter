@@ -16,7 +16,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from shared.schemas import HealthResponse
-from backend.routes import profile, files, format_tasks, theme
+from backend.routes import profile, files, format_tasks
 
 # ============================================================
 # FastAPI App
@@ -40,7 +40,6 @@ app.add_middleware(
 app.include_router(profile.router, prefix="/api", tags=["profile"])
 app.include_router(files.router, prefix="/api", tags=["files"])
 app.include_router(format_tasks.router, prefix="/api", tags=["format"])
-app.include_router(theme.router, prefix="/api", tags=["theme"])
 
 
 @app.get("/api/health", response_model=HealthResponse)

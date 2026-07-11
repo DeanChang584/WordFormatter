@@ -1,14 +1,8 @@
 """
 /files 端点 — 文件管理
-复用 models.py 的文件列表逻辑，保持与原 PyQt6 应用一致。
 """
 
-import sys
 from pathlib import Path
-_ROOT = Path(__file__).parent.parent.parent
-if str(_ROOT) not in sys.path:
-    sys.path.insert(0, str(_ROOT))
-
 from fastapi import APIRouter
 from shared.schemas import FileSelectRequest, FolderRequest, FileDeleteRequest, FilesResponse, OkResponse
 
@@ -34,8 +28,11 @@ async def select_files(req: FileSelectRequest):
     """添加文件（选择文件）"""
     added = []
     for fp in req.paths:
-        fp = str(Path(fp))
-        if fp not in _files and Path(fp).suffix.lower() in _get_extensions():
+        p = Path(fp)
+        if not p.is_file():
+            continue
+        fp = str(p)
+        if fp not in _files and p.suffix.lower() in _get_extensions():
             _files.append(fp)
             added.append(fp)
     return FilesResponse(files=list(_files), count=len(_files), added=added)
