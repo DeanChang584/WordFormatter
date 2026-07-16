@@ -19,6 +19,7 @@ public sealed partial class TableSettingsView : UserControl
     private double _cellMarginMm = 1.9;  // canonical value in mm (0.19 cm → 1.9 mm)
     private bool _isUnitSwitching;
     private bool _isLoadingFields;
+    private bool _isUpdatingModeFromValue;
 
     public TableSettingsView()
     {
@@ -226,21 +227,24 @@ public sealed partial class TableSettingsView : UserControl
             TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "1.0", Content = "单倍行距" });
             TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "1.5", Content = "1.5 倍行距" });
             TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "2.0", Content = "2 倍行距" });
+            TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "multi", Content = "多倍行距" });
             TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "fixed", Content = "固定值" });
             TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "at_least", Content = "最小值" });
         }
         TableLineSpacingBox.Value = vm.TableLineSpacing;
-        // Map mode + value to ComboBox index: 0=1x, 1=1.5x, 2=2x, 3=fixed, 4=at_least
+        // Map mode + value to ComboBox index: 0=1x, 1=1.5x, 2=2x, 3=multi, 4=fixed, 5=at_least
         if (vm.TableLineSpacingMode == "fixed")
-            TableLineSpacingModeBox.SelectedIndex = 3;
-        else if (vm.TableLineSpacingMode == "at_least")
             TableLineSpacingModeBox.SelectedIndex = 4;
+        else if (vm.TableLineSpacingMode == "at_least")
+            TableLineSpacingModeBox.SelectedIndex = 5;
         else if (Math.Abs(vm.TableLineSpacing - 1.0) < 0.01)
             TableLineSpacingModeBox.SelectedIndex = 0;
         else if (Math.Abs(vm.TableLineSpacing - 2.0) < 0.01)
             TableLineSpacingModeBox.SelectedIndex = 2;
+        else if (Math.Abs(vm.TableLineSpacing - 1.5) < 0.01)
+            TableLineSpacingModeBox.SelectedIndex = 1;
         else
-            TableLineSpacingModeBox.SelectedIndex = 1; // default: 1.5x
+            TableLineSpacingModeBox.SelectedIndex = 3; // 多倍行距（其他值）
 
         AutoSplitCheck.IsChecked = vm.AutoSplit;
         RepeatHeaderCheck.IsChecked = vm.RepeatHeader;
@@ -560,13 +564,28 @@ public sealed partial class TableSettingsView : UserControl
     {
         var vm = GetVm();
         if (vm == null || _isLoadingFields) return;
+
+        // If triggered by value-box auto-sync, only update mode
+        if (_isUpdatingModeFromValue)
+        {
+            var autoMode = TableLineSpacingModeBox.SelectedIndex switch
+            {
+                4 => "fixed",
+                5 => "at_least",
+                _ => "multiple",
+            };
+            vm.TableLineSpacingMode = autoMode;
+            return;
+        }
+
         var idx = TableLineSpacingModeBox.SelectedIndex;
         var (mode, val) = idx switch
         {
             0 => ("multiple", 1.0),
             1 => ("multiple", 1.5),
             2 => ("multiple", 2.0),
-            3 => ("fixed", 1.5),
+            3 => ("multiple", vm.TableLineSpacing),
+            4 => ("fixed", 1.5),
             _ => ("at_least", 1.5),
         };
         vm.TableLineSpacingMode = mode;
@@ -578,6 +597,27 @@ public sealed partial class TableSettingsView : UserControl
         var vm = GetVm();
         if (vm == null || _isLoadingFields) return;
         vm.TableLineSpacing = value;
+
+        // Auto-sync ComboBox to match value (only when mode is "multiple", idx 0-3)
+        if (vm.TableLineSpacingMode == "multiple")
+        {
+            int newIdx;
+            if (Math.Abs(value - 1.0) < 0.01)
+                newIdx = 0;
+            else if (Math.Abs(value - 1.5) < 0.01)
+                newIdx = 1;
+            else if (Math.Abs(value - 2.0) < 0.01)
+                newIdx = 2;
+            else
+                newIdx = 3;
+
+            if (newIdx != TableLineSpacingModeBox.SelectedIndex)
+            {
+                _isUpdatingModeFromValue = true;
+                TableLineSpacingModeBox.SelectedIndex = newIdx;
+                _isUpdatingModeFromValue = false;
+            }
+        }
     }
 
     private void AutoSplitCheck_Changed(object sender, RoutedEventArgs e)

@@ -17,7 +17,7 @@ from typing import Optional, TYPE_CHECKING
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_LINE_SPACING
 from docx.oxml.ns import qn, nsdecls
-from docx.oxml import parse_xml
+from docx.oxml import parse_xml, OxmlElement
 from lxml import etree
 from docx.shared import RGBColor, Pt
 
@@ -529,10 +529,11 @@ def _set_cell_alignment(cell, config: DmTableConfig):
         jc = parse_xml(f'<w:jc {nsdecls("w")} w:val="{align_h}"/>')
         ppr.append(jc)
 
-        # 特殊格式（缩进）— SubElement 避免 nsdecls 命名空间冲突
+        # 特殊格式（缩进）
         for old in ppr.findall(qn("w:ind")):
             ppr.remove(old)
-        ind_el = etree.SubElement(ppr, qn("w:ind"))
+        ind_el = OxmlElement("w:ind")
+        ppr.append(ind_el)
 
         indent_type = config.indent_type
         if indent_type == "first_line":
