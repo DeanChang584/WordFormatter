@@ -1,8 +1,12 @@
+using System.Text.Json.Serialization;
+
 namespace WordFormatterUI.Models.Format;
 
 public class TaskResultDto
 {
+    [JsonPropertyName("success")]
     public int Ok { get; set; }
+    [JsonPropertyName("failed")]
     public int Fail { get; set; }
     public int Skipped { get; set; }
     public int Total { get; set; }
