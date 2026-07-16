@@ -70,6 +70,13 @@ public sealed partial class PreviewWindow : Window
         {
             try
             {
+                // Set user data folder to LOCALAPPDATA so WebView2 works in Program Files
+                var userDataDir = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "WordFormatter", "WebView2");
+                System.IO.Directory.CreateDirectory(userDataDir);
+                Environment.SetEnvironmentVariable(
+                    "WEBVIEW2_USER_DATA_FOLDER", userDataDir);
                 _wv2Env = await Microsoft.Web.WebView2.Core
                     .CoreWebView2Environment.CreateAsync();
             }
