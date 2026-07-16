@@ -11,6 +11,7 @@ from docx.enum.section import WD_ORIENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn, nsdecls
 from docx.oxml import parse_xml, OxmlElement
+from lxml import etree
 from .data_model import DocumentGridConfig, HeaderFooterConfig, PageConfig, PAPER_SIZES
 
 # 最小合法边距（mm），防止 0/negative 导致 Word 报错
@@ -84,11 +85,9 @@ def apply_document_grid(section, config: DocumentGridConfig,
 
     对应 Word 页面设置 → 文档网格。
 
-    OOXML 规范中 ``w:linePitch`` 是一个比例值——Word 用页面总高度除以该值
-    计算行数，内部再自行扣除边距。因此传入页面总高度而非可用高度。
-
-    ``w:charSpace`` 用可用宽度计算，但受正文字号下界约束（字符单元格不能比
-    字体小，否则 Word 会用字号替代导致结果不符）。
+    ``w:linePitch`` 用可用高度计算（Word 用 section 的可见行数反推、
+    自动扣除边距），因此传入可用高度。``w:charSpace`` 同理用可用宽度，
+    但受正文字号下界约束。
 
     Args:
         section: python-docx Section 对象
@@ -109,10 +108,9 @@ def apply_document_grid(section, config: DocumentGridConfig,
 
     # 转换工具（1 mm ≈ 56.7 twips）
     MM_TO_TWIPS = 56.7
-    page_h_twips = page_height_mm * MM_TO_TWIPS
 
-    available_w_mm = page_width_mm - margin_left - margin_right
-    available_w_twips = available_w_mm * MM_TO_TWIPS
+    available_w_twips = (page_width_mm - margin_left - margin_right) * MM_TO_TWIPS
+    available_h_twips = (page_height_mm - margin_top - margin_bottom) * MM_TO_TWIPS
 
     # 正文字号下界（twips），Word 不允许单元格比字体更窄
     font_size_twips = font_size_pt * 20.0
@@ -120,10 +118,10 @@ def apply_document_grid(section, config: DocumentGridConfig,
     attrs = {}
     if config.mode == "lines":
         attrs['w:type'] = 'lines'
-        attrs['w:linePitch'] = str(int(round(page_h_twips / config.lines_per_page)))
+        attrs['w:linePitch'] = str(int(round(available_h_twips / config.lines_per_page)))
     elif config.mode == "both":
         attrs['w:type'] = 'linesAndChars'
-        attrs['w:linePitch'] = str(int(round(page_h_twips / config.lines_per_page)))
+        attrs['w:linePitch'] = str(int(round(available_h_twips / config.lines_per_page)))
         char_space = max(
             int(round(available_w_twips / config.chars_per_line)),
             int(font_size_twips),
@@ -135,12 +133,12 @@ def apply_document_grid(section, config: DocumentGridConfig,
     if config.align_to_grid:
         attrs['w:alignToGrid'] = '1'
 
-    # OxmlElement ensures namespace compatibility — parse_xml+nsdecls
-    # may inject conflicting xmlns declarations that Word ignores.
-    docGrid = OxmlElement("w:docGrid")
+    # lxml SubElement inherits the parent namespace context without
+    # injecting extras — parse_xml and OxmlElement both add xmlns attrs
+    # which Word may reject as conflicting with sectPr's own declarations.
+    docGrid = etree.SubElement(sectPr, qn("w:docGrid"))
     for k, v in attrs.items():
         docGrid.set(qn(k), v)
-    sectPr.append(docGrid)
 
 
 def apply_page_setup(section, config: PageConfig, font_size_pt: float = 12.0) -> None:
