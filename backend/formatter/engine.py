@@ -37,7 +37,7 @@ from .paragraph import (
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from .heading import apply_heading_style, HEADING_NAMES
 from docx.oxml.ns import qn, nsdecls
-from docx.oxml import parse_xml
+from docx.oxml import parse_xml, OxmlElement
 from .table import apply_table_format, _is_in_table_cell
 from .image import apply_image_size, apply_image_wrapping, apply_image_alignment, compress_images
 from .data_model import PictureConfig as DmPictureConfig, TableConfig as DmTableConfig
@@ -287,8 +287,16 @@ def format_docx(filepath: str, profile: ProfileConfig,
 
             # 正文段落 → 完整段落格式（含缩进）
             # 文档网格启用时跳行距，让 docGrid 接管
-            apply_paragraph_format(para, b,
-                skip_line_spacing=fp.page.document_grid.mode != "none")
+            use_grid = fp.page.document_grid.mode != "none"
+            apply_paragraph_format(para, b, skip_line_spacing=use_grid)
+            if use_grid:
+                _enable_snap_to_grid(para)
+                # Remove empty/conflicting spacing — docGrid sets the pitch
+                pPr = para._element.find(qn("w:pPr"))
+                if pPr is not None:
+                    sp = pPr.find(qn("w:spacing"))
+                    if sp is not None:
+                        pPr.remove(sp)
             for run in para.runs:
                 apply_run_font(run, b.font_cn, b.font_en, b.font_size,
                                b.font_color, b.font_bold, b.font_italic)
@@ -384,6 +392,13 @@ def _is_image_only_paragraph(paragraph) -> bool:
             return False
     # 所有 run 都是图片 → 确认无文本
     return paragraph.text.strip() == ""
+
+
+def _enable_snap_to_grid(paragraph) -> None:
+    """Add <w:snapToGrid/> to paragraph pPr so Word actually uses docGrid."""
+    pPr = paragraph._element.get_or_add_pPr()
+    if pPr.find(qn("w:snapToGrid")) is None:
+        pPr.append(OxmlElement("w:snapToGrid"))
 
 
 def _zero_paragraph_indent(paragraph) -> None:
