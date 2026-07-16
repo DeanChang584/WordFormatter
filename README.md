@@ -1,6 +1,6 @@
 # Word Formatter
 
-WinUI 3 + FastAPI 架构的 Word 文档批量排版工具。支持 `.doc` / `.docx` 双格式，兼容 Microsoft Office 和 WPS，适合教师、学生、公务员、编辑等用户的批量文档格式规范化需求。
+WinUI 3 + FastAPI 架构的 Word 文档批量排版工具。支持 `.doc` / `.docx` 双格式，兼容 Microsoft Office 和 WPS，适合批量文档格式规范化需求。
 
 > 最后更新：2026-07-16 | 版本：v2.0 | 平台：Windows 10/11
 
