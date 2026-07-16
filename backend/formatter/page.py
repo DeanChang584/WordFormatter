@@ -75,7 +75,10 @@ def _add_page_number_footer(section) -> None:
     para._element.append(parse_xml(fld_xml))
 
 
-def apply_document_grid(section, config: DocumentGridConfig, page_height_mm: float = 297.0) -> None:
+def apply_document_grid(section, config: DocumentGridConfig,
+                       page_width_mm: float = 210.0, page_height_mm: float = 297.0,
+                       margin_top: float = 25.4, margin_bottom: float = 25.4,
+                       margin_left: float = 31.7, margin_right: float = 31.7) -> None:
     """将文档网格配置写入 section 的 XML（w:docGrid）。
 
     对应 Word 页面设置 → 文档网格。
@@ -84,7 +87,9 @@ def apply_document_grid(section, config: DocumentGridConfig, page_height_mm: flo
     Args:
         section: python-docx Section 对象
         config:  DocumentGridConfig 实例
-        page_height_mm: 页面高度（mm），用于计算 linePitch（行间距 twips）。
+        page_width_mm: 页面宽度（mm）
+        page_height_mm: 页面高度（mm）
+        margin_*: 四边边距（mm）
     """
     sectPr = section._sectPr
 
@@ -96,21 +101,24 @@ def apply_document_grid(section, config: DocumentGridConfig, page_height_mm: flo
     if config.mode == "none":
         return  # 不写入 docGrid，等同于无网格
 
+    # 可用正文区域（mm → twips，1 mm ≈ 56.7 twips）
+    available_w_mm = page_width_mm - margin_left - margin_right
+    available_h_mm = page_height_mm - margin_top - margin_bottom
+    available_w_twips = available_w_mm * 56.7
+    available_h_twips = available_h_mm * 56.7
+
     # 构建属性
     attrs = {}
     if config.mode == "lines":
         attrs['w:type'] = 'lines'
-        # linePitch = 页面可用高度（twips） / 每页行数
-        # 1 mm = 56.7 twips，减去上下边距后取整
-        page_height_twips = page_height_mm * 56.7
-        line_pitch = int(round(page_height_twips / config.lines_per_page))
+        line_pitch = int(round(available_h_twips / config.lines_per_page))
         attrs['w:linePitch'] = str(line_pitch)
     elif config.mode == "both":
         attrs['w:type'] = 'linesAndChars'
-        page_height_twips = page_height_mm * 56.7
-        line_pitch = int(round(page_height_twips / config.lines_per_page))
+        line_pitch = int(round(available_h_twips / config.lines_per_page))
         attrs['w:linePitch'] = str(line_pitch)
-        attrs['w:charSpace'] = str(config.chars_per_line)
+        char_space = int(round(available_w_twips / config.chars_per_line))
+        attrs['w:charSpace'] = str(char_space)
 
     # 补充 Word 兼容标记
     if config.adjust_right_indent:
@@ -160,7 +168,12 @@ def apply_page_setup(section, config: PageConfig) -> None:
 
     # ── 文档网格 ──
     if config.document_grid.mode != "none":
-        apply_document_grid(section, config.document_grid, page_height_mm=h_mm)
+        apply_document_grid(section, config.document_grid,
+                           page_width_mm=w_mm, page_height_mm=h_mm,
+                           margin_top=config.margin_top,
+                           margin_bottom=config.margin_bottom,
+                           margin_left=config.margin_left,
+                           margin_right=config.margin_right)
 
 
 def apply_header_footer_font(section, config: HeaderFooterConfig) -> None:
