@@ -53,6 +53,7 @@ public sealed partial class PreviewWindow : Window
     private CancellationTokenSource? _pollCts;
     private string? _currentPdfPath;
     private bool _viewerLoaded; // true after viewer.html first loads
+    private static bool _pdfjsReady; // true after pdfjs assets copied to LOCALAPPDATA
     private readonly DocumentPreviewService _previewService = new();
 
     // Shared WebView2 environment — created once, reused by all PreviewWindows
@@ -218,6 +219,40 @@ public sealed partial class PreviewWindow : Window
 
     // ── DOCX → PDF → PDF.js pipeline ─────────────────────────────────
 
+    /// <summary>
+    /// Copy pdfjs assets from the install directory to a user-writable
+    /// LOCALAPPDATA location so that the preview PDF can live in the same
+    /// virtual-host directory as viewer.html (same-origin, no CORS).
+    /// </summary>
+    private static void CopyPdfjsAssets(string destDir)
+    {
+        try
+        {
+            var srcDir = Path.Combine(AppContext.BaseDirectory, "Assets", "pdfjs");
+            if (!Directory.Exists(srcDir)) return;
+            if (Directory.Exists(destDir)) return; // already copied
+
+            // Copy all files and subdirectories
+            void CopyDir(string src, string dest)
+            {
+                Directory.CreateDirectory(dest);
+                foreach (var file in Directory.GetFiles(src))
+                {
+                    var relPath = Path.GetRelativePath(srcDir, file);
+                    var destFile = Path.Combine(destDir, relPath);
+                    Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
+                    File.Copy(file, destFile, overwrite: false);
+                }
+                foreach (var dir in Directory.GetDirectories(src))
+                {
+                    CopyDir(dir, Path.Combine(dest, Path.GetFileName(dir)));
+                }
+            }
+            CopyDir(srcDir, destDir);
+        }
+        catch { } // Non-critical — fallback: try the install dir directly
+    }
+
     private async Task LoadPdfFromDocxAsync(string docxPath)
     {
         try
@@ -256,34 +291,35 @@ public sealed partial class PreviewWindow : Window
         else
             await PdfViewer.EnsureCoreWebView2Async();
 
-        // PDF.js viewer assets (read-only, from install dir)
-        var pdfjsDir = Path.Combine(AppContext.BaseDirectory, "Assets", "pdfjs");
-
-        // Preview PDF (user-writable temp dir — avoids PermissionError in Program Files)
-        var pdfTempDir = Path.Combine(
+        // Single virtual host: copy pdfjs + PDF to LOCALAPPDATA for same-origin access
+        var appData = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "WordFormatter", "preview");
-        Directory.CreateDirectory(pdfTempDir);
-        var destPath = Path.Combine(pdfTempDir, "_preview.pdf");
+            "WordFormatter");
+        var pdfjsDestDir = Path.Combine(appData, "pdfjs");
+        var pdfjsWebDir = Path.Combine(pdfjsDestDir, "web");
+
+        // Copy pdfjs assets once (lazy init)
+        if (!_pdfjsReady)
+        {
+            CopyPdfjsAssets(pdfjsDestDir);
+            _pdfjsReady = true;
+        }
+
+        // Copy preview PDF into same directory as viewer.html for same-origin access
+        var destPath = Path.Combine(pdfjsWebDir, "_preview.pdf");
         File.Copy(pdfPath, destPath, overwrite: true);
 
-        // Virtual-host mapping for the PDF.js viewer (serves both viewer.html + _preview.pdf)
         PdfViewer.CoreWebView2.SetVirtualHostNameToFolderMapping(
-            "pdfjs.local", pdfjsDir,
-            Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow);
-        PdfViewer.CoreWebView2.SetVirtualHostNameToFolderMapping(
-            "preview.local", pdfTempDir,
+            "pdfjs.local", pdfjsDestDir,
             Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow);
 
         if (!_viewerLoaded)
         {
-            // First load: navigate to viewer.html
-            // PDF file served from preview.local (temp dir) to avoid permission issues
+            // Single host, same origin — no CORS issue
             PdfViewer.Source = new Uri(
-                "https://pdfjs.local/web/viewer.html?file=https://preview.local/_preview.pdf");
+                "https://pdfjs.local/web/viewer.html?file=_preview.pdf");
             _viewerLoaded = true;
 
-            // Wait for PDF.js to initialise before allowing toolbar use
             PdfViewer.CoreWebView2.NavigationCompleted += async (_, _) =>
             {
                 await Task.Delay(600);
@@ -292,9 +328,8 @@ public sealed partial class PreviewWindow : Window
         }
         else
         {
-            // Subsequent loads: just switch the document in the running viewer
             await ExecutePdfJsAsync(
-                "PDFViewerApplication.open({url:'https://preview.local/_preview.pdf'})");
+                "PDFViewerApplication.open({url:'_preview.pdf'})");
             await Task.Delay(400);
             await SyncPageInfoAsync();
         }
