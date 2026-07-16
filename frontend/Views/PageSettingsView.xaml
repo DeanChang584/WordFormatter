@@ -161,7 +161,8 @@
                 </ComboBox>
             </Grid>
 
-            <!-- ── 文档网格 ──────────────────────────────────────────── -->
+            <!-- ── 文档网格（暂时隐藏） ──────────────────────────────────── -->
+            <Grid Visibility="Collapsed">
 
             <!-- 文档网格模式 -->
             <Grid Height="32" ColumnSpacing="8">
@@ -238,6 +239,8 @@
                     Checked="AlignToGridBox_Checked"
                     Unchecked="AlignToGridBox_Checked" />
             </Grid>
+
+            </Grid>  <!-- docGrid hidden wrapper -->
 
         </StackPanel>
     </controls:ConfigCard>
