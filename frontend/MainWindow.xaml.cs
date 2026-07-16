@@ -622,13 +622,12 @@ public sealed partial class MainWindow : Window
 
     private async void RightStartBtn_Click(object sender, RoutedEventArgs e)
     {
-        // Reuse the same logic as FormatControlView_StartFormatRequested
-        var api = App.Api!;
-        var filesResp = await api.GetFilesAsync();
-
-        var files = (filesResp?.Success == true && filesResp.Data is not null)
-            ? filesResp.Data.Files.Select(f => f.Path).ToList()
-            : new List<string>();
+        // Use selected files if any, otherwise fall back to all files
+        var fileItems = FilesVm.Files;
+        var selected = fileItems.Where(f => f.IsSelected).ToList();
+        var files = selected.Count > 0
+            ? selected.Select(f => f.Path).ToList()
+            : fileItems.Select(f => f.Path).ToList();
 
         if (files.Count == 0)
         {
@@ -788,12 +787,12 @@ public sealed partial class MainWindow : Window
 
     private async void FormatControlView_StartFormatRequested(object? sender, EventArgs e)
     {
-        var api = App.Api!;
-        var filesResp = await api.GetFilesAsync();
-
-        var files = (filesResp?.Success == true && filesResp.Data is not null)
-            ? filesResp.Data.Files.Select(f => f.Path).ToList()
-            : new List<string>();
+        // Use selected files if any, otherwise fall back to all files
+        var fileItems = FilesVm.Files;
+        var selected = fileItems.Where(f => f.IsSelected).ToList();
+        var files = selected.Count > 0
+            ? selected.Select(f => f.Path).ToList()
+            : fileItems.Select(f => f.Path).ToList();
 
         if (files.Count == 0)
         {
