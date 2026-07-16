@@ -34,14 +34,14 @@
                     SelectionChanged="PaperSizeBox_SelectionChanged" />
             </Grid>
 
-            <!-- 文字方向 -->
+            <!-- 纸张方向 -->
             <Grid Height="32" ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="72" />
                     <ColumnDefinition Width="120" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="文字方向" />
+                <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="纸张方向" />
                 <ComboBox
                     Grid.Column="1"
                     x:Name="OrientationBox"
