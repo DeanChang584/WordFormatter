@@ -241,7 +241,7 @@ def format_docx(filepath: str, profile: ProfileConfig,
 
         # 1. 页面设置（所有 section 统一）
         for section in doc.sections:
-            apply_page_setup(section, fp.page)
+            apply_page_setup(section, fp.page, font_size_pt=fp.body.font_size)
             # 页眉页脚字体（必须在 page_setup 之后，因为页码是在 page_setup 中插入的）
             apply_header_footer_font(section, fp.header_footer)
 

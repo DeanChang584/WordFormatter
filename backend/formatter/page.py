@@ -78,18 +78,24 @@ def _add_page_number_footer(section) -> None:
 def apply_document_grid(section, config: DocumentGridConfig,
                        page_width_mm: float = 210.0, page_height_mm: float = 297.0,
                        margin_top: float = 25.4, margin_bottom: float = 25.4,
-                       margin_left: float = 31.7, margin_right: float = 31.7) -> None:
+                       margin_left: float = 31.7, margin_right: float = 31.7,
+                       font_size_pt: float = 12.0) -> None:
     """将文档网格配置写入 section 的 XML（w:docGrid）。
 
     对应 Word 页面设置 → 文档网格。
-    通过操作 sectPr 下的 w:docGrid 元素实现。
+
+    OOXML 规范中 ``w:linePitch`` 是一个比例值——Word 用页面总高度除以该值
+    计算行数，内部再自行扣除边距。因此传入页面总高度而非可用高度。
+
+    ``w:charSpace`` 用可用宽度计算，但受正文字号下界约束（字符单元格不能比
+    字体小，否则 Word 会用字号替代导致结果不符）。
 
     Args:
         section: python-docx Section 对象
         config:  DocumentGridConfig 实例
-        page_width_mm: 页面宽度（mm）
-        page_height_mm: 页面高度（mm）
+        page_width_mm / page_height_mm: 纸张尺寸（mm）
         margin_*: 四边边距（mm）
+        font_size_pt: 正文默认字号（pt），charSpace 下界
     """
     sectPr = section._sectPr
 
@@ -99,41 +105,42 @@ def apply_document_grid(section, config: DocumentGridConfig,
             sectPr.remove(child)
 
     if config.mode == "none":
-        return  # 不写入 docGrid，等同于无网格
+        return
 
-    # 可用正文区域（mm → twips，1 mm ≈ 56.7 twips）
+    # 转换工具（1 mm ≈ 56.7 twips）
+    MM_TO_TWIPS = 56.7
+    page_h_twips = page_height_mm * MM_TO_TWIPS
+
     available_w_mm = page_width_mm - margin_left - margin_right
-    available_h_mm = page_height_mm - margin_top - margin_bottom
-    available_w_twips = available_w_mm * 56.7
-    available_h_twips = available_h_mm * 56.7
+    available_w_twips = available_w_mm * MM_TO_TWIPS
 
-    # 构建属性
+    # 正文字号下界（twips），Word 不允许单元格比字体更窄
+    font_size_twips = font_size_pt * 20.0
+
     attrs = {}
     if config.mode == "lines":
         attrs['w:type'] = 'lines'
-        line_pitch = int(round(available_h_twips / config.lines_per_page))
-        attrs['w:linePitch'] = str(line_pitch)
+        attrs['w:linePitch'] = str(int(round(page_h_twips / config.lines_per_page)))
     elif config.mode == "both":
         attrs['w:type'] = 'linesAndChars'
-        line_pitch = int(round(available_h_twips / config.lines_per_page))
-        attrs['w:linePitch'] = str(line_pitch)
-        char_space = int(round(available_w_twips / config.chars_per_line))
+        attrs['w:linePitch'] = str(int(round(page_h_twips / config.lines_per_page)))
+        char_space = max(
+            int(round(available_w_twips / config.chars_per_line)),
+            int(font_size_twips),
+        )
         attrs['w:charSpace'] = str(char_space)
 
-    # 补充 Word 兼容标记
     if config.adjust_right_indent:
         attrs['w:snapToGrid'] = '1'
-
     if config.align_to_grid:
         attrs['w:alignToGrid'] = '1'
 
-    # 创建 XML 元素
     attr_str = ' '.join(f'{k}="{v}"' for k, v in attrs.items())
     xml_str = f'<w:docGrid {nsdecls("w")} {attr_str}/>'
     sectPr.append(parse_xml(xml_str))
 
 
-def apply_page_setup(section, config: PageConfig) -> None:
+def apply_page_setup(section, config: PageConfig, font_size_pt: float = 12.0) -> None:
     """将页面配置应用到文档 section。
 
     覆盖：边距、纸张大小（含自定义）、方向、页眉页脚边距、页码、文档网格。
@@ -173,7 +180,8 @@ def apply_page_setup(section, config: PageConfig) -> None:
                            margin_top=config.margin_top,
                            margin_bottom=config.margin_bottom,
                            margin_left=config.margin_left,
-                           margin_right=config.margin_right)
+                           margin_right=config.margin_right,
+                           font_size_pt=font_size_pt)
 
 
 def apply_header_footer_font(section, config: HeaderFooterConfig) -> None:
