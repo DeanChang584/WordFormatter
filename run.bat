@@ -9,9 +9,15 @@ echo   Word Formatter Launcher
 echo ========================================
 echo.
 
+rem -- Kill stale backend processes (old code keeps serving otherwise) --
+echo [0/2] Cleaning up stale backend processes...
+taskkill /F /IM backend.exe >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8765" ^| findstr "LISTENING"') do taskkill /F /PID %%a >nul 2>&1
+ping -n 2 127.0.0.1 >nul
+
 rem -- Backend --
 echo [1/2] Starting backend server...
-start "WordFormatter-Backend" cmd /k "title Backend && cd /d %ROOT% && set PYTHONPATH=%ROOT% && echo Backend: http://127.0.0.1:8765 && python -m uvicorn backend.server:app --host 127.0.0.1 --port 8765"
+start "WordFormatter-Backend" cmd /k "title Backend && cd /d %ROOT% && set PYTHONPATH=%ROOT% && echo Backend: http://127.0.0.1:8765 && python -m uvicorn backend.server:app --host 127.0.0.1 --port 8765 --reload"
 
 rem Wait for backend port
 echo Waiting for backend to be ready...

@@ -82,6 +82,12 @@ PyInstaller.__main__.run([
     "--hidden-import=lxml.etree",
     "--hidden-import=multipart",
     "--hidden-import=httpx",
+    # COM support for .doc conversion (Word/WPS automation)
+    "--hidden-import=pythoncom",
+    "--hidden-import=pywintypes",
+    "--hidden-import=win32com",
+    "--hidden-import=win32com.client",
+    "--hidden-import=win32api",
     # Add data paths
     f"--add-data={PROJECT_ROOT / 'backend'}{os.pathsep}backend",
     f"--add-data={PROJECT_ROOT / 'shared'}{os.pathsep}shared",
