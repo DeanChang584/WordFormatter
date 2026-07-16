@@ -18,6 +18,7 @@ public sealed partial class TableSettingsView : UserControl
     private double _rowHeightMm = 8.0;   // canonical value in mm (0.8 cm → 8 mm)
     private double _cellMarginMm = 1.9;  // canonical value in mm (0.19 cm → 1.9 mm)
     private bool _isUnitSwitching;
+    private bool _isLoadingFields;
 
     public TableSettingsView()
     {
@@ -127,6 +128,8 @@ public sealed partial class TableSettingsView : UserControl
         var vm = GetVm();
         // DO NOT call LoadFromSharedProfile — resets user changes
 
+        _isLoadingFields = true;
+
         WidthValueBox.Value = vm.WidthValue;
 
         PopulateComboBoxWithDisplayNames(
@@ -220,17 +223,24 @@ public sealed partial class TableSettingsView : UserControl
         // Line spacing ComboBox items (lazy init)
         if (TableLineSpacingModeBox.Items.Count == 0)
         {
-            TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "multiple", Content = "多倍行距" });
+            TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "1.0", Content = "单倍行距" });
+            TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "1.5", Content = "1.5 倍行距" });
+            TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "2.0", Content = "2 倍行距" });
             TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "fixed", Content = "固定值" });
             TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "at_least", Content = "最小值" });
         }
         TableLineSpacingBox.Value = vm.TableLineSpacing;
-        TableLineSpacingModeBox.SelectedIndex = vm.TableLineSpacingMode switch
-        {
-            "fixed" => 1,
-            "at_least" => 2,
-            _ => 0, // multiple
-        };
+        // Map mode + value to ComboBox index: 0=1x, 1=1.5x, 2=2x, 3=fixed, 4=at_least
+        if (vm.TableLineSpacingMode == "fixed")
+            TableLineSpacingModeBox.SelectedIndex = 3;
+        else if (vm.TableLineSpacingMode == "at_least")
+            TableLineSpacingModeBox.SelectedIndex = 4;
+        else if (Math.Abs(vm.TableLineSpacing - 1.0) < 0.01)
+            TableLineSpacingModeBox.SelectedIndex = 0;
+        else if (Math.Abs(vm.TableLineSpacing - 2.0) < 0.01)
+            TableLineSpacingModeBox.SelectedIndex = 2;
+        else
+            TableLineSpacingModeBox.SelectedIndex = 1; // default: 1.5x
 
         AutoSplitCheck.IsChecked = vm.AutoSplit;
         RepeatHeaderCheck.IsChecked = vm.RepeatHeader;
@@ -247,6 +257,8 @@ public sealed partial class TableSettingsView : UserControl
 
         var cellMarginUnitLabel = GetUnitLabel(CellMarginUnitBox);
         CellMarginBox.Value = cellMarginUnitLabel == "厘米" ? _cellMarginMm / 10.0 : _cellMarginMm;
+
+        _isLoadingFields = false;
     }
 
     /// <summary>
@@ -547,25 +559,25 @@ public sealed partial class TableSettingsView : UserControl
     private void TableLineSpacingModeBox_Changed(object sender, SelectionChangedEventArgs e)
     {
         var vm = GetVm();
-        if (vm == null) return;
-        vm.TableLineSpacingMode = TableLineSpacingModeBox.SelectedIndex switch
+        if (vm == null || _isLoadingFields) return;
+        var idx = TableLineSpacingModeBox.SelectedIndex;
+        var (mode, val) = idx switch
         {
-            1 => "fixed",
-            2 => "at_least",
-            _ => "multiple",
+            0 => ("multiple", 1.0),
+            1 => ("multiple", 1.5),
+            2 => ("multiple", 2.0),
+            3 => ("fixed", 1.5),
+            _ => ("at_least", 1.5),
         };
-        // Switch to sensible defaults when mode changes
-        if (vm.TableLineSpacingMode != "multiple")
-        {
-            TableLineSpacingBox.Visibility = Visibility.Visible;
-            if (vm.TableLineSpacing == 0) vm.TableLineSpacing = 1.5;
-        }
+        vm.TableLineSpacingMode = mode;
+        vm.TableLineSpacing = val;
     }
 
     private void TableLineSpacingBox_ValueChanged(object sender, double value)
     {
         var vm = GetVm();
-        if (vm != null) vm.TableLineSpacing = value;
+        if (vm == null || _isLoadingFields) return;
+        vm.TableLineSpacing = value;
     }
 
     private void AutoSplitCheck_Changed(object sender, RoutedEventArgs e)

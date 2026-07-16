@@ -405,16 +405,17 @@ def _enable_snap_to_grid(paragraph) -> None:
 
 def _zero_paragraph_indent(paragraph) -> None:
     """在段落级别显式写入零值缩进，覆盖 Normal 样式继承的首行缩进。"""
-    ppr = paragraph._element.find(qn("w:pPr"))
-    if ppr is None:
-        ppr = parse_xml(f'<w:pPr {nsdecls("w")}/>')
-        paragraph._element.insert(0, ppr)
-    for old in ppr.findall(qn("w:ind")):
-        ppr.remove(old)
-    ind = parse_xml(
-        f'<w:ind {nsdecls("w")} w:firstLine="0" w:firstLineChars="0" w:hanging="0" w:hangingChars="0" w:left="0" w:right="0"/>'
-    )
-    ppr.append(ind)
+    from lxml import etree
+    pPr = paragraph._element.get_or_add_pPr()
+    for old in pPr.findall(qn("w:ind")):
+        pPr.remove(old)
+    ind = etree.SubElement(pPr, qn("w:ind"))
+    ind.set(qn("w:firstLine"), "0")
+    ind.set(qn("w:firstLineChars"), "0")
+    ind.set(qn("w:hanging"), "0")
+    ind.set(qn("w:hangingChars"), "0")
+    ind.set(qn("w:left"), "0")
+    ind.set(qn("w:right"), "0")
 
 
 def process_file(filepath: str, profile: ProfileConfig,

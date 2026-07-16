@@ -337,7 +337,11 @@ def _set_cell_margins(table, config: DmTableConfig):
     for old in tbl_pr.findall(qn("w:tblCellMar")):
         tbl_pr.remove(old)
 
-    margin_val = str(int(config.cell_margin * 567))  # cm → twips (1 cm ≈ 567 twips)
+    # Convert cell margin to twips based on unit
+    if config.cell_margin_unit == "mm" or config.cell_margin_unit == "毫米":
+        margin_val = str(int(config.cell_margin * 56.7))  # mm → twips
+    else:
+        margin_val = str(int(config.cell_margin * 567))   # cm → twips
     unit = "dxa"
 
     margins_xml = f"""<w:tblCellMar {nsdecls("w")}>
@@ -542,7 +546,9 @@ def _set_cell_alignment(cell, config: DmTableConfig):
                        str(_twips_from_indent(config.indent_value, config.indent_unit)))
         else:
             ind_el.set(qn("w:firstLine"), "0")
+            ind_el.set(qn("w:firstLineChars"), "0")
             ind_el.set(qn("w:hanging"), "0")
+            ind_el.set(qn("w:hangingChars"), "0")
             ind_el.set(qn("w:left"), "0")
             ind_el.set(qn("w:right"), "0")
 

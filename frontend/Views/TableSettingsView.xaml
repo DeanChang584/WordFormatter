@@ -158,7 +158,7 @@
                               HorizontalAlignment="Stretch"
                               SelectionChanged="TableLineSpacingModeBox_Changed" />
                     <controls:NumericTextBox Grid.Column="2" x:Name="TableLineSpacingBox" Width="80"
-                                              HorizontalAlignment="Stretch"
+                                              HorizontalAlignment="Stretch" Step="0.25" DecimalPlaces="1"
                                               ValueChanged="TableLineSpacingBox_ValueChanged" />
                 </Grid>
 
