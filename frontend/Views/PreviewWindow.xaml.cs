@@ -372,6 +372,7 @@ public sealed partial class PreviewWindow : Window
     {
         LoadingRing.IsActive = false;
         LoadingText.Text = message;
+        LoadingRing.Visibility = Visibility.Collapsed;
         LoadingSubText.Visibility = Visibility.Collapsed;
         Toolbar.Visibility = Visibility.Collapsed;
     }
