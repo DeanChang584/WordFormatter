@@ -554,18 +554,24 @@ def _set_cell_alignment(cell, config: DmTableConfig):
 
 
 def _apply_cell_line_spacing(cell, config: DmTableConfig):
-    """Apply line spacing to all paragraphs in a table cell."""
+    """Apply line spacing to all paragraphs in a table cell.
+
+    Set line_spacing_rule before line_spacing so python-docx interprets
+    the value with the correct rule, avoiding value misinterpretation
+    when the paragraph inherits a different rule from the Normal style.
+    """
     for para in cell.paragraphs:
         pf = para.paragraph_format
         mode = config.line_spacing_mode
         value = config.line_spacing
         if mode == "fixed":
-            pf.line_spacing = Pt(value)
             pf.line_spacing_rule = WD_LINE_SPACING.EXACTLY
-        elif mode == "at_least":
             pf.line_spacing = Pt(value)
+        elif mode == "at_least":
             pf.line_spacing_rule = WD_LINE_SPACING.AT_LEAST
+            pf.line_spacing = Pt(value)
         else:
+            pf.line_spacing_rule = WD_LINE_SPACING.MULTIPLE
             pf.line_spacing = value
 
 

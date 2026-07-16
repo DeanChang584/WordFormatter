@@ -83,12 +83,13 @@ def _apply_line_spacing(paragraph_format, value: float,
     """
     rule = _LINE_SPACING_RULE.get(mode)
     if rule is None:
-        # multiple mode — python-docx accepts float directly
+        # multiple — set rule first so value is interpreted as multiplier
+        paragraph_format.line_spacing_rule = WD_LINE_SPACING.MULTIPLE
         paragraph_format.line_spacing = value
     else:
-        # fixed / at_least — value is pt
-        paragraph_format.line_spacing = Pt(value)
+        # fixed / at_least — set rule first so Pt(value) is interpreted as EMU
         paragraph_format.line_spacing_rule = rule
+        paragraph_format.line_spacing = Pt(value)
 
 
 def apply_first_line_indent(paragraph, value: float, unit: str,
