@@ -371,8 +371,11 @@ public sealed partial class PreviewWindow : Window
     private void ShowError(string message)
     {
         LoadingRing.IsActive = false;
-        LoadingText.Text = message;
         LoadingRing.Visibility = Visibility.Collapsed;
+        LoadingText.Text = message;
+        LoadingText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+            Microsoft.UI.Colors.Red);
+        LoadingText.FontWeight = Microsoft.UI.Text.FontWeights.SemiBold;
         LoadingSubText.Visibility = Visibility.Collapsed;
         Toolbar.Visibility = Visibility.Collapsed;
     }
