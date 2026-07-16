@@ -597,6 +597,21 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        // ── Check COM availability (WPS/Word needed for PDF conversion) ──
+        var docPreview = new Services.DocumentPreviewService();
+        if (docPreview.Detect() is null)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "无法预览",
+                Content = "未检测到 WPS 或 Microsoft Word。\n预览功能需要其中任意一种办公软件将文档转换为 PDF。",
+                CloseButtonText = "确定",
+                XamlRoot = Content.XamlRoot,
+            };
+            await dialog.ShowAsync();
+            return;
+        }
+
         // ── Open PreviewWindow ──────────────────────────────────────
         var window = Views.PreviewWindow.GetOrCreate();
         window.Activate();

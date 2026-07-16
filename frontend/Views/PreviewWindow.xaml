@@ -78,12 +78,14 @@
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch" />
 
-            <!-- Loading overlay -->
+            <!-- Loading overlay (also used for error display) -->
             <StackPanel
                 x:Name="LoadingOverlay"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
-                Spacing="12">
+                Spacing="12"
+                MaxWidth="480"
+                Margin="24,0">
                 <ProgressRing
                     x:Name="LoadingRing"
                     IsActive="True"
@@ -92,13 +94,15 @@
                 <TextBlock
                     x:Name="LoadingText"
                     Text="正在生成预览……"
-                    FontSize="14"
+                    FontSize="16"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    HorizontalAlignment="Center" />
+                    HorizontalAlignment="Center"
+                    TextWrapping="WrapWholeWords"
+                    TextAlignment="Center" />
                 <TextBlock
                     x:Name="LoadingSubText"
                     Text="请稍候"
-                    FontSize="12"
+                    FontSize="13"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     HorizontalAlignment="Center" />
             </StackPanel>
