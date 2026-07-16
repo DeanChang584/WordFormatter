@@ -68,6 +68,8 @@ class HistoryManager:
                         "name": f.name,
                         "path": f.path,
                         "status": f.status,
+                        "outputName": f.output_name,
+                        "outputPath": f.output_path,
                     })
                 summaries.append({
                     "id": rec.task_id,
