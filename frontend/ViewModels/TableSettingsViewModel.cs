@@ -47,6 +47,10 @@ public partial class TableSettingsViewModel : ObservableObject
     [ObservableProperty] private bool _fontItalic;
     [ObservableProperty] private bool _fontUnderline;
 
+    // ── 行距 ──
+    [ObservableProperty] private double _tableLineSpacing = 1.5;
+    [ObservableProperty] private string _tableLineSpacingMode = "multiple";
+
     // ── 行高 ──
     [ObservableProperty] private string _rowHeightMode = "auto";
     [ObservableProperty] private double _rowHeight = 0.8;
@@ -142,6 +146,9 @@ public partial class TableSettingsViewModel : ObservableObject
         FontItalic = t.FontItalic;
         FontUnderline = t.FontUnderline;
 
+        TableLineSpacing = t.LineSpacing;
+        TableLineSpacingMode = t.LineSpacingMode;
+
         RowHeightMode = t.RowHeightMode;
         RowHeight = t.RowHeight;
         RowHeightUnit = t.RowHeightUnit;
@@ -188,6 +195,9 @@ public partial class TableSettingsViewModel : ObservableObject
         t.FontItalic = FontItalic;
         t.FontUnderline = FontUnderline;
 
+        t.LineSpacing = TableLineSpacing;
+        t.LineSpacingMode = TableLineSpacingMode;
+
         t.RowHeightMode = RowHeightMode;
         t.RowHeight = RowHeight;
         t.RowHeightUnit = RowHeightUnit;
@@ -228,6 +238,8 @@ public partial class TableSettingsViewModel : ObservableObject
     }
     partial void OnFontItalicChanged(bool value)        { IsDirty = true; WriteToSharedProfile(); }
     partial void OnFontUnderlineChanged(bool value)     { IsDirty = true; WriteToSharedProfile(); }
+    partial void OnTableLineSpacingChanged(double value) { IsDirty = true; WriteToSharedProfile(); }
+    partial void OnTableLineSpacingModeChanged(string value) { IsDirty = true; WriteToSharedProfile(); }
     partial void OnRowHeightModeChanged(string value)
     {
         IsDirty = true;
@@ -280,6 +292,9 @@ public partial class TableSettingsViewModel : ObservableObject
         FontBold = false;
         FontItalic = false;
         FontUnderline = false;
+
+        TableLineSpacing = 1.5;
+        TableLineSpacingMode = "multiple";
 
         RowHeightMode = "auto";
         RowHeight = 0.8;

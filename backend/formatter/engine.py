@@ -200,6 +200,8 @@ def _to_format_profile(profile: ProfileConfig,
         font_bold=tbl.font_bold,
         font_italic=tbl.font_italic,
         font_underline=tbl.font_underline,
+        line_spacing=tbl.line_spacing,
+        line_spacing_mode=getattr(tbl, "line_spacing_mode", "multiple"),
         auto_split=tbl.auto_split,
         repeat_header=tbl.repeat_header,
     )

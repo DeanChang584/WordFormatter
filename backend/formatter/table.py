@@ -15,9 +15,11 @@
 from typing import Optional, TYPE_CHECKING
 
 from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.text import WD_LINE_SPACING
 from docx.oxml.ns import qn, nsdecls
 from docx.oxml import parse_xml
-from docx.shared import RGBColor
+from lxml import etree
+from docx.shared import RGBColor, Pt
 
 from .data_model import TableConfig as DmTableConfig
 
@@ -122,6 +124,9 @@ def apply_table_format(doc: "Document", config: DmTableConfig) -> None:
 
                 # 单元格对齐
                 _set_cell_alignment(cell, config)
+
+                # 行距
+                _apply_cell_line_spacing(cell, config)
 
             # 表头文字居中覆盖：头行水平对齐强制为居中
             if row_idx == 0 and config.header_text_center:
@@ -520,32 +525,42 @@ def _set_cell_alignment(cell, config: DmTableConfig):
         jc = parse_xml(f'<w:jc {nsdecls("w")} w:val="{align_h}"/>')
         ppr.append(jc)
 
-        # 特殊格式（缩进）
+        # 特殊格式（缩进）— SubElement 避免 nsdecls 命名空间冲突
+        for old in ppr.findall(qn("w:ind")):
+            ppr.remove(old)
+        ind_el = etree.SubElement(ppr, qn("w:ind"))
+
         indent_type = config.indent_type
-        if indent_type != "none":
-            indent_val = str(_twips_from_indent(config.indent_value, config.indent_unit))
-
-            # 删除旧的 ind 元素
-            for old in ppr.findall(qn("w:ind")):
-                ppr.remove(old)
-
-            if indent_type == "first_line":
-                ind_xml = f'<w:ind {nsdecls("w")} w:firstLine="{indent_val}"/>'
-            elif indent_type == "hanging":
-                ind_xml = f'<w:ind {nsdecls("w")} w:hanging="{indent_val}"/>'
-            else:
-                ind_xml = f'<w:ind {nsdecls("w")} w:left="{indent_val}"/>'
-
-            ind_el = parse_xml(ind_xml)
-            ppr.append(ind_el)
+        if indent_type == "first_line":
+            ind_el.set(qn("w:firstLine"),
+                       str(_twips_from_indent(config.indent_value, config.indent_unit)))
+        elif indent_type == "hanging":
+            ind_el.set(qn("w:hanging"),
+                       str(_twips_from_indent(config.indent_value, config.indent_unit)))
+        elif indent_type != "none":
+            ind_el.set(qn("w:left"),
+                       str(_twips_from_indent(config.indent_value, config.indent_unit)))
         else:
-            # 无缩进：显式写入零值覆盖样式继承（Normal 样式中可能有首行缩进）
-            for old in ppr.findall(qn("w:ind")):
-                ppr.remove(old)
-            ind_el = parse_xml(
-                f'<w:ind {nsdecls("w")} w:firstLine="0" w:hanging="0" w:left="0" w:right="0"/>'
-            )
-            ppr.append(ind_el)
+            ind_el.set(qn("w:firstLine"), "0")
+            ind_el.set(qn("w:hanging"), "0")
+            ind_el.set(qn("w:left"), "0")
+            ind_el.set(qn("w:right"), "0")
+
+
+def _apply_cell_line_spacing(cell, config: DmTableConfig):
+    """Apply line spacing to all paragraphs in a table cell."""
+    for para in cell.paragraphs:
+        pf = para.paragraph_format
+        mode = config.line_spacing_mode
+        value = config.line_spacing
+        if mode == "fixed":
+            pf.line_spacing = Pt(value)
+            pf.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+        elif mode == "at_least":
+            pf.line_spacing = Pt(value)
+            pf.line_spacing_rule = WD_LINE_SPACING.AT_LEAST
+        else:
+            pf.line_spacing = value
 
 
 def _override_header_cell_align_center(cell):

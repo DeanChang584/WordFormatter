@@ -43,6 +43,10 @@ public class TableConfigDto
     public bool FontItalic { get; set; } = false;
     public bool FontUnderline { get; set; } = false;
 
+    // ── 行距 ──
+    public double LineSpacing { get; set; } = 1.5;
+    public string LineSpacingMode { get; set; } = "multiple";
+
     // ── 行高 ──
     public string RowHeightMode { get; set; } = "auto";
     public double RowHeight { get; set; } = 0.8;

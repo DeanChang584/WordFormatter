@@ -217,6 +217,21 @@ public sealed partial class TableSettingsView : UserControl
         FontItalicCheck.IsChecked = vm.FontItalic;
         FontUnderlineCheck.IsChecked = vm.FontUnderline;
 
+        // Line spacing ComboBox items (lazy init)
+        if (TableLineSpacingModeBox.Items.Count == 0)
+        {
+            TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "multiple", Content = "多倍行距" });
+            TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "fixed", Content = "固定值" });
+            TableLineSpacingModeBox.Items.Add(new ComboBoxItem { Tag = "at_least", Content = "最小值" });
+        }
+        TableLineSpacingBox.Value = vm.TableLineSpacing;
+        TableLineSpacingModeBox.SelectedIndex = vm.TableLineSpacingMode switch
+        {
+            "fixed" => 1,
+            "at_least" => 2,
+            _ => 0, // multiple
+        };
+
         AutoSplitCheck.IsChecked = vm.AutoSplit;
         RepeatHeaderCheck.IsChecked = vm.RepeatHeader;
 
@@ -527,6 +542,30 @@ public sealed partial class TableSettingsView : UserControl
     private void FontUnderlineCheck_Changed(object sender, RoutedEventArgs e)
     {
         GetVm().FontUnderline = FontUnderlineCheck.IsChecked == true;
+    }
+
+    private void TableLineSpacingModeBox_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        var vm = GetVm();
+        if (vm == null) return;
+        vm.TableLineSpacingMode = TableLineSpacingModeBox.SelectedIndex switch
+        {
+            1 => "fixed",
+            2 => "at_least",
+            _ => "multiple",
+        };
+        // Switch to sensible defaults when mode changes
+        if (vm.TableLineSpacingMode != "multiple")
+        {
+            TableLineSpacingBox.Visibility = Visibility.Visible;
+            if (vm.TableLineSpacing == 0) vm.TableLineSpacing = 1.5;
+        }
+    }
+
+    private void TableLineSpacingBox_ValueChanged(object sender, double value)
+    {
+        var vm = GetVm();
+        if (vm != null) vm.TableLineSpacing = value;
     }
 
     private void AutoSplitCheck_Changed(object sender, RoutedEventArgs e)

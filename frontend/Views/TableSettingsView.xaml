@@ -145,6 +145,23 @@
                               Unchecked="FontUnderlineCheck_Changed" />
                 </Grid>
 
+                <!-- 行距 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="行距" />
+                    <ComboBox Grid.Column="1" x:Name="TableLineSpacingModeBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="TableLineSpacingModeBox_Changed" />
+                    <controls:NumericTextBox Grid.Column="2" x:Name="TableLineSpacingBox" Width="80"
+                                              HorizontalAlignment="Stretch"
+                                              ValueChanged="TableLineSpacingBox_ValueChanged" />
+                </Grid>
+
                 <!-- 特殊格式（缩进） -->
                 <Grid Height="32" ColumnSpacing="8">
                     <Grid.ColumnDefinitions>

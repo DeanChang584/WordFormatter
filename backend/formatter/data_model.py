@@ -187,6 +187,10 @@ class TableConfig:
     row_height: float = 0.8
     row_height_unit: str = "cm"
 
+    # Line spacing
+    line_spacing: float = 1.5
+    line_spacing_mode: str = "multiple"
+
     # Pagination
     auto_split: bool = True
     repeat_header: bool = False
