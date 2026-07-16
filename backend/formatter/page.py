@@ -10,7 +10,7 @@ from docx.shared import Mm, Pt
 from docx.enum.section import WD_ORIENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn, nsdecls
-from docx.oxml import parse_xml
+from docx.oxml import parse_xml, OxmlElement
 from .data_model import DocumentGridConfig, HeaderFooterConfig, PageConfig, PAPER_SIZES
 
 # 最小合法边距（mm），防止 0/negative 导致 Word 报错
@@ -135,9 +135,12 @@ def apply_document_grid(section, config: DocumentGridConfig,
     if config.align_to_grid:
         attrs['w:alignToGrid'] = '1'
 
-    attr_str = ' '.join(f'{k}="{v}"' for k, v in attrs.items())
-    xml_str = f'<w:docGrid {nsdecls("w")} {attr_str}/>'
-    sectPr.append(parse_xml(xml_str))
+    # OxmlElement ensures namespace compatibility — parse_xml+nsdecls
+    # may inject conflicting xmlns declarations that Word ignores.
+    docGrid = OxmlElement("w:docGrid")
+    for k, v in attrs.items():
+        docGrid.set(qn(k), v)
+    sectPr.append(docGrid)
 
 
 def apply_page_setup(section, config: PageConfig, font_size_pt: float = 12.0) -> None:
