@@ -109,7 +109,7 @@ public sealed partial class ResultHistoryView : UserControl
             // File name
             var nameBlock = new TextBlock
             {
-                Text = System.IO.Path.GetFileName(f.File),
+                Text = !string.IsNullOrWhiteSpace(f.Output) ? f.Output : System.IO.Path.GetFileName(f.File),
                 FontSize = 12,
                 Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorPrimaryBrush"],
             };
@@ -252,9 +252,9 @@ public sealed partial class ResultHistoryView : UserControl
             // Prefer per-file status from Results
             foreach (var r in rec.Results.Results)
             {
-                if (!string.IsNullOrWhiteSpace(r.File))
+                if (!string.IsNullOrWhiteSpace(r.Output) || !string.IsNullOrWhiteSpace(r.File))
                 {
-                    fileEntries.Add((r.File, r.Status));
+                    fileEntries.Add((r.Output ?? r.File, r.Status));
                 }
             }
         }
@@ -263,9 +263,10 @@ public sealed partial class ResultHistoryView : UserControl
             // Fallback: file names with status from the Files list
             foreach (var f in rec.Files)
             {
-                if (!string.IsNullOrWhiteSpace(f.Name))
+                var displayName = !string.IsNullOrWhiteSpace(f.OutputName) ? f.OutputName : f.Name;
+                if (!string.IsNullOrWhiteSpace(displayName))
                 {
-                    fileEntries.Add((f.Name, f.Status));
+                    fileEntries.Add((displayName, f.Status));
                 }
             }
         }

@@ -143,16 +143,22 @@ class HistoryManager:
         from shared.schemas import HistoryFileItem
         result_results = result.get("results", [])
         status_map: dict[str, str] = {}
+        output_map: dict[str, tuple[str, str]] = {}
         for r in result_results:
-            status_map[r.get("file", "")] = r.get("status", "")
+            f = r.get("file", "")
+            status_map[f] = r.get("status", "")
+            output_map[f] = (r.get("output", ""), r.get("outputPath", ""))
 
         file_items: list[HistoryFileItem] = []
         for p in file_paths:
             fname = Path(p).name
+            out_name, out_path = output_map.get(fname, ("", ""))
             file_items.append(HistoryFileItem(
                 name=fname,
                 path=str(Path(p).resolve()),
                 status=status_map.get(fname, ""),
+                output_name=out_name,
+                output_path=out_path,
             ))
 
         rec = HistoryRecord(

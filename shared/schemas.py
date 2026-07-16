@@ -408,6 +408,8 @@ class HistoryFileItem(_Base):
     name: str = ""
     path: str = ""
     status: str = ""  # "success" / "error" / "skipped" / ""
+    output_name: str = ""
+    output_path: str = ""
 
 
 class HistoryRecord(_Base):
