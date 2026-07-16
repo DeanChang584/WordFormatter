@@ -120,7 +120,9 @@ def apply_document_grid(section, config: DocumentGridConfig,
         attrs['w:type'] = 'lines'
         attrs['w:linePitch'] = str(int(round(available_h_twips / config.lines_per_page)))
     elif config.mode == "both":
-        attrs['w:type'] = 'linesAndChars'
+        # type="lines" avoids Word's linesAndChars font-size validation
+        # that can silently override the computed values.
+        attrs['w:type'] = 'lines'
         attrs['w:linePitch'] = str(int(round(available_h_twips / config.lines_per_page)))
         char_space = max(
             int(round(available_w_twips / config.chars_per_line)),

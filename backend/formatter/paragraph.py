@@ -186,12 +186,14 @@ def _clear_paragraph_indent(paragraph) -> None:
     pPr.append(ind)
 
 
-def apply_paragraph_format(paragraph, config: BodyConfig) -> None:
+def apply_paragraph_format(paragraph, config: BodyConfig,
+                          skip_line_spacing: bool = False) -> None:
     """将正文段落格式应用到单个段落或样式。"""
     pf = paragraph.paragraph_format
 
-    # 行距（multiple / fixed / at_least）
-    _apply_line_spacing(pf, config.line_spacing, config.line_spacing_mode)
+    # 行距（文档网格启用时跳过，让 docGrid 接管）
+    if not skip_line_spacing:
+        _apply_line_spacing(pf, config.line_spacing, config.line_spacing_mode)
 
     # 缩进（首行/悬挂/无缩进 — 无缩进时显式清零，避免继承泄露）
     if config.indent_type in ("字符", "ch", "firstLine"):

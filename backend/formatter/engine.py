@@ -251,8 +251,10 @@ def format_docx(filepath: str, profile: ProfileConfig,
         b = fp.body
         normal.paragraph_format.alignment = ALIGNMENT.get(
             b.alignment, WD_ALIGN_PARAGRAPH.JUSTIFY)
-        _apply_line_spacing(normal.paragraph_format,
-                            b.line_spacing, b.line_spacing_mode)
+        # 文档网格启用时不设行距，让 docGrid 接管
+        if fp.page.document_grid.mode == "none":
+            _apply_line_spacing(normal.paragraph_format,
+                                b.line_spacing, b.line_spacing_mode)
 
         # 3. 标题样式（1~6 级独立配置）
         heading_names = set(HEADING_NAMES.values())
@@ -284,7 +286,9 @@ def format_docx(filepath: str, profile: ProfileConfig,
                 continue
 
             # 正文段落 → 完整段落格式（含缩进）
-            apply_paragraph_format(para, b)
+            # 文档网格启用时跳行距，让 docGrid 接管
+            apply_paragraph_format(para, b,
+                skip_line_spacing=fp.page.document_grid.mode != "none")
             for run in para.runs:
                 apply_run_font(run, b.font_cn, b.font_en, b.font_size,
                                b.font_color, b.font_bold, b.font_italic)
