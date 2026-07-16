@@ -1,115 +1,102 @@
 # 实施进度
 
 > 对照 implementation-plan.md 记录每个步骤的完成状态
+> 最后更新：2026-07-15
 
 ## 阶段 0：项目基础设施
 
 - [x] Step 0.1 — 创建目标目录结构（2026-07-12）
-  - 创建全部 24 个子目录（frontend/ 下 8 个、backend/ 下 8 个、根级 8 个）
-  - 迁移 engine/models/worker 到 backend/formatter/ 并重写为规则引擎架构
-  - data_model.py 新建（dataclass，snake_case，含 FONT_SIZE_MAP 和 PAPER_SIZES）
-  - font.py 新建（apply_run_font / apply_style_font）
-  - page.py 新建（apply_page_setup）
-  - paragraph.py 新建（apply_paragraph_format / apply_first_line_indent）
-  - heading.py 新建（apply_heading_style + HEADING_NAMES 常量）
-  - engine.py 新建（format_docx / convert_doc_to_docx / process_file / check_dependencies）
-  - image.py / table.py / header_footer.py 占位文件
-  - 更新 backend/routes/profile.py 和 format_tasks.py 的 import 路径
-  - format_tasks.py 重写为直接 threading（移除 FormatWorker 依赖）
-  - 删除根目录旧 engine.py / models.py / worker.py
-  - 验证：import OK, health 200, process_file 输出正确
 - [x] Step 0.2 — 创建共享数据模型文件（2026-07-12）
-  - shared/schemas.py 已存在（占位 DTO，snake_case；完整 camelCase 重写延后到 Step 1.4）
-  - shared/constants.py 新建（FONT_SIZE_MAP / FONT_SIZE_NAMES / font_size_to_name / PAPER_SIZES）
-  - shared/version.py 新建（VERSION = "2.0"）
-  - 验证：from shared import schemas / constants / version 均无 ImportError
 - [x] Step 0.3 — 创建后端日志模块（2026-07-12）
-  - backend/utils/__init__.py 新建（包标识）
-  - backend/utils/logger.py 新建：get_logger(name, category="backend") 返回 INFO 级 Logger
-  - 按用途分文件：app.log / backend.log / format.log / error.log（error.log 跨分类汇总 ERROR+）
-  - 按日期滚动：TimedRotatingFileHandler（when=midnight）+ 自定义 namer，午夜生成 logs/{分类}-YYYY-MM-DD.log（留根目录）
-  - 两级保留 purge_old_logs()：logs/ 根目录每日文件保留 30 天→移入 logs/archive/；archive/ 保留 90 天→自动删除；首次取 logger + 每次滚动后各清扫一次；用户无需手动清理
-  - 格式 [时间] [级别] [模块名] 消息内容；file + console 双通道；propagate=False；get_logger 幂等
-  - 决议：采用「按用途分文件 + 30/90 天两级保留」替代原 YYYY-MM-DD 单文件方案（已同步 architecture.md §9、design-document.md 十六之二、本计划 Step 0.3）
-  - 验证：三分类各写 INFO + 一条 ERROR → 对应文件生成，ERROR 同进 format.log 与 error.log；doRollover → logs/app-YYYY-MM-DD.log；构造 45 天/120 天旧文件 → 分别被移入 archive/、删除，活动文件不受影响；幂等 handler 数=3
 - [x] Step 0.4 — 初始化 Git 并更新 .gitignore（2026-07-12）
-  - Git 仓库已存在（`.git/` 已初始化），无需重新 init
-  - .gitignore 已存在，补充「Runtime data directories」段：新增 `logs/`、`cache/`、`temp/`、`output/`（原有仅 `*.log` 忽略日志文件，未忽略运行时目录）
-  - 其余要求项均已覆盖：`__pycache__/`、`*.pyc`（`*.py[cod]`）、`*.zip`、`.vscode/`、`.idea/`、`frontend/bin/`、`frontend/obj/`
-  - 验证：`git check-ignore -v` 确认四个运行时目录分别命中 .gitignore 第 27-30 行；`git status` 未列出 logs/cache/temp/output；`git ls-files` 确认无已跟踪的运行时文件
-  - 说明：当前工作区存在 Phase 0 迁移产生的大量未提交变更（删除根目录旧 engine/models/worker、新增 backend/formatter 等），本步骤未执行 commit，交由用户决定提交时机
 
 ## 阶段 1：后端核心
 
-- [ ] Step 1.1 — 创建后端应用入口
-- [ ] Step 1.2 — 创建统一响应格式工具
-- [ ] Step 1.3 — 创建后端配置管理模块
-- [ ] Step 1.4 — 创建共享 DTO 定义
-- [ ] Step 1.5 — 创建错误码定义
-- [ ] Step 1.6 — 创建文件管理 API
-- [ ] Step 1.7 — 创建排版配置 API
-- [ ] Step 1.8 — 创建模板管理 API
-- [ ] Step 1.9 — 创建排版任务 API
+- [x] Step 1.1 — 创建后端应用入口（2026-07-12）
+- [x] Step 1.2 — 创建统一响应格式工具（2026-07-12）
+- [x] Step 1.3 — 创建后端配置管理模块（2026-07-12）
+- [x] Step 1.4 — 创建共享 DTO 定义（2026-07-12）
+- [x] Step 1.5 — 创建错误码定义（2026-07-12）
+- [x] Step 1.6 — 创建文件管理 API（2026-07-12）
+- [x] Step 1.7 — 创建排版配置 API（2026-07-12）
+- [x] Step 1.8 — 创建模板管理 API（2026-07-12）
+- [x] Step 1.9 — 创建排版任务 API（2026-07-12）
 
 ## 阶段 2：排版引擎重构
 
-- [ ] Step 2.1 — 迁移到规则引擎架构
-- [ ] Step 2.2 — 对齐排版配置数据结构
-- [ ] Step 2.3 — 实现页面设置规则
-- [ ] Step 2.4 — 实现段落与标题排版规则
+- [x] Step 2.1 + 2.2 — 规则引擎架构迁移 & 数据结构对齐（2026-07-12）
+- [x] Step 2.3 — 页面设置规则（A4/A3/B5/custom、portrait/landscape、页码、文档网格）（2026-07-12）
+- [x] Step 2.4 — 段落与标题排版规则（行距三模式、首行/悬挂缩进、多单位支持、段间距）（2026-07-12）
+- [x] table.py 完整实现（对齐/宽度/行高/边框/表头/单元格对齐/缩进/边距/跨页/重复表头）（2026-07-12）
+- [x] image.py 完整实现（尺寸/对齐/压缩/缩放/文字环绕）（2026-07-12）
+- [x] header_footer.py 完整实现（apply_header_footer 遍历所有 section，偶数页页眉页脚）（2026-07-12）
+- [x] page.py apply_header_footer_font（engine.py 实际调用的实现，含 fldSimple 页码字段检测）（2026-07-12）
 
 ## 阶段 3：Service 层
 
-- [ ] Step 3.1 — 创建文件管理 Service
-- [ ] Step 3.2 — 创建排版任务 Service
-- [ ] Step 3.3 — 创建模板管理 Service
+- [x] Step 3.1 — 文件管理 Service（2026-07-12）
+- [x] Step 3.2 — 排版任务 Service（2026-07-12）
+- [x] Step 3.3 — 模板管理 Service（2026-07-12）
 
 ## 阶段 4：历史记录 + 预览
 
-- [ ] Step 4.1 — 实现历史记录模块
-- [ ] Step 4.2 — 实现参数摘要预览
+- [x] Step 4.1 — 历史记录模块（2026-07-12）
+- [x] Step 4.2 — 参数摘要预览 Level 1（2026-07-12）
+- [x] PDF 预览 Level 2（2026-07-15）
+  - POST /api/preview/pdf + GET /pdf/{id} + POST /pdf/{id}/cancel
+  - WebView2 + PDF.js 渲染
+  - WPS/Word COM 策略模式转换（DocumentPreviewService / IDocumentPdfConverter / WpsPdfConverter / WordPdfConverter）
+  - 单例 PreviewWindow + WPS COM 预热 + WarmUpAsync
 
 ## 阶段 5：前端基础
 
-- [ ] Step 5.1 — 初始化 WinUI3 项目
-- [ ] Step 5.2 — 创建 ApiService
-- [ ] Step 5.3 — 创建前端 DTO 类
+- [x] Step 5.1 — 初始化 WinUI3 项目（2026-07-12）
+- [x] Step 5.2 — 创建 ApiService（18 个 API 方法，返回强类型 DTO）（2026-07-12）
+- [x] Step 5.3 — 创建前端 DTO 类（22 个文件 7 个子目录）（2026-07-12）
 
 ## 阶段 6：主窗口框架
 
-- [ ] Step 6.1 — 创建三栏主窗口布局
-- [ ] Step 6.2 — 实现标题栏
-- [ ] Step 6.3 — 实现左侧导航栏
-- [ ] Step 6.4 — 实现状态栏
+- [x] Step 6.1 — 三栏主窗口布局（2026-07-12）
+- [x] Step 6.2 — 标题栏 TitleBar（2026-07-12，icon-only 无文字）
+- [x] Step 6.3 — 左侧导航栏 NavBar + ItemSelector（2026-07-12）
+  - 8 项导航（含关于软件）、Ctrl+1~8 快捷键、compact 模式（<800px 折叠仅图标）
+- [x] Step 6.4 — 状态栏 StatusBar（2026-07-12）
 
 ## 阶段 7：中间配置区域
 
-- [ ] Step 7.1 — 配置卡片框架
-- [ ] Step 7.2 — 页面设置界面
-- [ ] Step 7.3 — 正文样式界面
-- [ ] Step 7.4 — 标题样式界面
-- [ ] Step 7.5 — 页眉页脚界面
-- [ ] Step 7.6 — 图片/表格设置界面
-- [ ] Step 7.7 — 高级设置和关于界面
+- [x] Step 7.1 — 配置卡片框架 ConfigCard（2026-07-12，圆角 8px 无底部按钮）
+- [x] Step 7.2 — 页面设置 PageSettingsView（纸张/方向/边距/文档网格）（2026-07-12）
+- [x] Step 7.3 — 正文样式 BodyStyleView（2026-07-12，含 strikethrough/hanging）
+- [x] Step 7.4 — 标题样式 HeadingStyleView（2026-07-12，级别切换+_isLoadingFields 守卫）
+- [x] Step 7.5 — 页眉页脚 HeaderFooterView（2026-07-12，含 strikethrough+underline，mm/cm 单位）
+- [x] Step 7.6 — 图片/表格设置 PictureSettingsView + TableSettingsView
+  - PictureSettingsView：尺寸模式/宽高+单位/保持比例/不放大/对齐/文字环绕/压缩质量/自动压缩（全部已实现）
+  - TableSettingsView：23 个属性，~20 组控件（对齐/宽度%/自适应/行高/表头/样式/缩进/单元格对齐 H+V/背景色/边框样式+颜色+宽度/边距/跨页/重复表头）（全部已实现）
+- [x] Step 7.7 — 高级设置 AdvancedSettingsView（语言+主题 ComboBox）+ AboutView（图标/版本/描述/GitHub/邮箱/版权）（2026-07-12）
 
 ## 阶段 8：右侧工作区域
 
-- [ ] Step 8.1 — 文件管理卡片
-- [ ] Step 8.2 — 排版控制卡片
-- [ ] Step 8.3 — 结果与历史卡片
+- [x] Step 8.1 — 文件管理卡片（2026-07-12，CheckBox 列表+拖拽+全选/反选+最近打开+搜索）
+- [x] Step 8.2 — 排版控制卡片 FormatControlView（模板选择+输出目录+预览+开始/取消+进度+结果+重试+打开输出文件夹）（2026-07-12）
+- [x] Step 8.3 — 结果与历史卡片 ResultHistoryView（结果摘要+失败文件展开+历史记录折叠/懒加载/重新执行/清空）（2026-07-12）
 
 ## 阶段 9：MVVM 绑定
 
-- [ ] Step 9.1 — 主窗口 ViewModel
-- [ ] Step 9.2 — 各页面独立 ViewModel
-- [ ] Step 9.3 — 绑定 ViewModel 与 API
-- [ ] Step 9.4 — 配置修改标记
+- [x] Step 9.1 — 主窗口 MainViewModel（统一 DataContext，聚合 12 子 VM，WireSubVmSync）（2026-07-12）
+- [x] Step 9.2 — 各页面独立 ViewModel（12 个 VM：Page/Body/Heading/HF/Picture/Table/Files/Format/TemplateMgt/History/Settings + Profile legacy）（2026-07-12）
+- [x] Step 9.3 — SharedProfile 双向 DTO 同步（SetSharedProfile → LoadFromSharedProfile ↔ WriteToSharedProfile）（2026-07-12）
+- [x] Step 9.4 — 配置修改标记 IsDirty（2026-07-12）
+- [x] Step 9.5 — 全局配置保存区 SaveBar
+  - 中栏底部固定 SaveBar（DirtyStatusText + 恢复默认 + 保存配置）
+  - 页面切换直接导航（无弹窗）
+  - 开始排版自动保存配置
+  - 仅关闭软件/切换模板/加载历史弹出保存确认
 
 ## 阶段 10：集成测试
 
-- [ ] Step 10.1 — 后端全接口集成测试
-- [ ] Step 10.2 — 前后端联调
-- [ ] Step 10.3 — 性能验证
+- [x] Step 10.1 — 后端全接口集成测试（61 passed, 0 failed, 3 skipped）（2026-07-12）
+- [ ] Step 10.2 — 前后端联调（Automation Complete ✅, Manual Acceptance Pending ⏳）
+- [ ] Step 10.3 — 性能验证（Pending ⏳）
 
 ## 阶段 11：打包发布
 
@@ -117,6 +104,33 @@
 - [ ] Step 11.2 — dotnet publish
 - [ ] Step 11.3 — 一键启动脚本
 
+## 额外完成项（超出原计划范围）
+
+- [x] NumericTextBox 自定义控件（替代 WinUI NumberBox：上下步进按钮、鼠标滚轮、键盘、Min/Max/Step/DecimalPlaces）
+- [x] LightTheme.xaml 完整自定义主题资源（7 个 SolidColorBrush + AccentButtonStyle #005FBA）
+- [x] App.xaml InvertBoolToVisibilityConverter 全局注册
+- [x] TemplateManagementView + TemplateManagementViewModel（模板列表/删除/导入/导出）
+- [x] TrayIconService 系统托盘（最小化到托盘、点击恢复）
+- [x] 响应式左列（4 档：48/160/240/360px，<800px compact 仅图标）
+- [x] 右列 Preview+Start 二级按钮（RightColumnGrid 底部）
+- [x] 导航到"高级设置"时右列切换为模板管理面板
+- [x] 导航到"关于软件"时右列隐藏、中栏 ColumnSpan=2 跨满
+- [x] 首行/悬挂缩进多单位支持（字符/pt/mm/cm/磅）
+- [x] 段间距行单位支持（beforeLines/afterLines XML 写入）
+- [x] 文档网格设置（无网格/只指定行/指定行和字符）
+- [x] 页眉页脚 fldSimple 页码字段检测
+- [x] WPS COM 单例预热 + 3 ProgID 检测策略
+- [x] PDF.js 驻留模式（首次加载 viewer.html，后续切换 JS open()）
+
+## 待实现项
+
+- [ ] 深色主题 DarkTheme.xaml
+- [ ] SettingsViewModel 绑定到 AdvancedSettingsView（当前硬编码 ComboBox 项）
+- [ ] 列间拖拽分隔条 GridSplitter（现为静态 1px 分隔线）
+- [ ] 自动更新机制
+- [ ] 多语言国际化
+- [ ] 打包发布（PyInstaller + dotnet publish + Inno Setup）
+
 ---
 
-> 最后更新：2026-07-12（Step 0.4 完成，阶段 0 全部完成；等待用户验证后进入 Step 1.1）
+> 最后更新：2026-07-15

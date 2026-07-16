@@ -13,46 +13,26 @@ public sealed partial class SettingsPage : Page
 
     private async void Page_Loaded(object sender, RoutedEventArgs e)
     {
-        // Load current theme
-        try
+        // Load current theme from local cache
+        var currentTheme = ThemeService.CurrentMode;
+        foreach (var child in ThemeRadio.Items)
         {
-            var theme = await App.Api.GetThemeAsync();
-            if (theme is not null)
+            if (child is RadioButton rb && rb.Tag?.ToString() == currentTheme)
             {
-                var targetTag = theme.Mode;
-                foreach (var child in ThemeRadio.Items)
-                {
-                    if (child is RadioButton rb && rb.Tag?.ToString() == targetTag)
-                    {
-                        rb.IsChecked = true;
-                        break;
-                    }
-                }
+                rb.IsChecked = true;
+                break;
             }
         }
-        catch { }
 
         // Check backend status
         await RefreshStatusAsync();
     }
 
-    private async void ThemeRadio_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void ThemeRadio_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ThemeRadio.SelectedItem is RadioButton rb && rb.Tag is string mode)
         {
-            await App.Api.SetThemeAsync(mode);
-
-            // Apply theme locally
-            var root = App.MainWindow.Content as FrameworkElement;
-            if (root is not null)
-            {
-                root.RequestedTheme = mode switch
-                {
-                    "light" => ElementTheme.Light,
-                    "dark" => ElementTheme.Dark,
-                    _ => ElementTheme.Default,
-                };
-            }
+            ThemeService.Apply(mode);
         }
     }
 

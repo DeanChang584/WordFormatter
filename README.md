@@ -1,177 +1,212 @@
 # Word Formatter
 
-<div align="center">
+WinUI 3 + FastAPI 架构的 Word 文档批量排版工具。支持 `.doc` / `.docx` 双格式，兼容 Microsoft Office 和 WPS，适合教师、学生、公务员、编辑等用户的批量文档格式规范化需求。
 
-[![GitHub release](https://img.shields.io/github/v/release/DeanChang584/WordFormatter?color=0066cc&style=flat-square)](https://github.com/DeanChang584/WordFormatter/releases)
-[![License](https://img.shields.io/github/license/DeanChang584/WordFormatter?style=flat-square)](./LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/DeanChang584/WordFormatter?style=flat-square)](https://github.com/DeanChang584/WordFormatter/stargazers)
+> 最后更新：2026-07-16 | 版本：v2.0 | 平台：Windows 10/11
 
-基于 Python 的 Word 文档批量排版工具，支持 `.doc` / `.docx` 双格式，兼容 Microsoft Office 和 WPS。
-
-</div>
+---
 
 ## 界面预览
 
-<div align="center">
-  <img src="screenshot.png" alt="Word Formatter 主界面" width="800">
-</div>
+| 页面设置 | 标题样式 |
+|:---:|:---:|
+| ![页面设置](screenshots/PageSetting.png) | ![标题样式](screenshots/HeadingStyle.png) |
+
+| 表格样式 | 关于软件 |
+|:---:|:---:|
+| ![表格样式](screenshots/TableStyle.png) | ![关于软件](screenshots/About.png) |
+
+---
 
 ## 功能
 
-- **页面设置** — 上下左右页边距（mm）
-- **正文样式** — 中英文字体、字号、颜色、加粗/斜体
-- **段落设置** — 行距（倍行距/固定值/最小值）、首行缩进、左右缩进、段前段后间距、对齐方式
-- **标题样式** — 标题 1~6 级独立设置（字体、字号、颜色、对齐、缩进、行距、段前段后）
-- **批量处理** — 选择文件或文件夹，一键处理
-- **主题切换** — 浅色 / 深色 / 跟随系统，Apple 风格配色
-- **无边框窗口** — 自定义标题栏，原生窗口缩放，现代感十足
-- **`.doc` 兼容** — 通过 `win32com` 自动将 `.doc` 转为 `.docx` 后排版
-- **安全输出** — 原文件不做修改，输出为 `原文件名-Revise.docx`
+### 排版配置（7 大模块）
 
-## ⭐ Star 趋势
+| 模块 | 功能 |
+|------|------|
+| **页面设置** | 纸张大小（A4/A3/B5/Letter/Legal/自定义）、方向（纵向/横向）、页边距（mm/cm）、页码、文档网格 |
+| **正文样式** | 中/西文字体、字号（初号~小六）、字形（加粗/倾斜/下划线/删除线）、对齐方式、行距（多倍/固定/最小值）、段前段后间距（pt/行）、首行/悬挂缩进（字符/pt/mm/cm） |
+| **标题样式** | 标题 1~6 级独立配置：中/西文字体、字号、字形、对齐、段间距（行单位）、行距、缩进类型与值 |
+| **页眉页脚** | 中/西文字体、字号、字形、对齐、页眉距顶部/页脚距底部距离（mm/cm） |
+| **图片设置** | 尺寸模式（固定宽度/高度/尺寸/原始）、宽高+单位（cm/mm/%/px）、保持纵横比、不放大、对齐方式、文字环绕（7 种）、压缩质量与自动压缩 |
+| **表格设置** | 对齐方式、宽度模式（自动/固定值/百分比）+单位、自适应列宽、行高模式+值+单位、表头字体/字号/加粗/居中/背景色、单元格水平/垂直对齐、边框样式+颜色+宽度、单元格边距+单位、缩进、跨页断行、重复表头 |
+| **高级设置** | 主题切换、语言选择 |
 
-<div align="center">
+### 批量处理
 
-[![Star History](https://api.star-history.com/svg?repos=DeanChang584/WordFormatter&type=Date)](https://star-history.com/#DeanChang584/WordFormatter&Date)
+- **文件管理**：添加文件/文件夹、拖拽导入、最近打开、全选/反选、搜索过滤
+- **批量排版**：一键启动、后台线程处理、实时进度（文件级）、取消任务、重试失败文件
+- **安全输出**：原文件不做修改，输出为 `原文件名-R.docx`，同名自动编号
+- **结果统计**：成功/失败计数、失败文件详情与逐文件重试
 
-</div>
+### 模板系统
 
-## 安装与运行
+- **模板管理**：保存配置为模板、导入/导出模板 JSON、删除（默认模板不可删除）
+- **默认模板**：预置"默认模板"，首次启动自动创建
+- **运行时存储**：所有用户数据（模板、日志、设置、历史）存储在 `%LOCALAPPDATA%\WordFormatter\`，不受安装目录权限限制
 
-### 环境要求
+### 预览
 
-- **操作系统**：Windows 10 / 11（`.doc` 转换依赖 COM 组件，仅限 Windows）
-- **Python**：3.8 及以上
-- **Office**（可选）：Microsoft Word 或 WPS（仅处理 `.doc` 文件时需要）
+- **Level 1 文本预览**：参数摘要预览，展示当前所有配置项
+- **Level 2 PDF 预览**：通过 WPS/Word COM 将格式化后的 DOCX 转为 PDF，使用 WebView2 + PDF.js 渲染，支持缩放（100%/适应宽度/适应页面）、翻页
 
-### 1. 克隆仓库
+---
+
+## 快速开始
+
+### 方式一：安装包（推荐）
+
+从 [Releases](https://github.com/DeanChang584/WordFormatter/releases) 下载最新 `Word Formatter v2.0.exe`，双击安装即可。安装后双击桌面快捷方式启动。
+
+**系统要求**：
+- Windows 10/11（x64）
+- [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)（Win11 自带）
+- Microsoft Word 或 WPS Office（预览功能可选）
+- 无需安装 .NET SDK 或 Python
+
+### 方式二：源码运行（开发）
 
 ```bash
-git clone git@github.com:DeanChang584/WordFormatter.git
+# 1. 后端
 cd WordFormatter
-```
-
-### 2. 创建虚拟环境（推荐）
-
-```bash
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-```
-
-### 3. 安装依赖
-
-**完整安装（支持 .doc + .docx）：**
-
-```bash
 pip install -r requirements.txt
+python -m uvicorn backend.server:app --host 127.0.0.1 --port 8765
+
+# 2. 前端（新终端）
+cd WordFormatter/frontend
+dotnet run
+
+# 或直接双击 run.bat
 ```
 
-**最小安装（仅 .docx）：**
-
-```bash
-pip install python-docx PyQt6
-```
-
-> `pywin32` 仅用于将 `.doc` 转为 `.docx`，需要本机安装 Microsoft Word 或 WPS。
-
-### 4. 运行
-
-```bash
-python WordFormatter.py
-```
-
-### 5. 操作步骤
-
-1. 点击 **选择文件** 或 **选择文件夹** 导入 Word 文档
-2. 调节参数：页面边距、段落格式、正文字体、标题样式
-3. 点击 **开始排版**，等待进度条完成
-4. 排版结果保存为 `原文件名-Revise.docx`，原文件不受影响
-
-### 常见问题
-
-| 问题 | 解决方案 |
-|---|---|
-| `ImportError: No module named 'PyQt6'` | 运行 `pip install PyQt6` |
-| `.doc` 文件提示转换失败 | 确认已安装 `pywin32` 且本机装有 Word 或 WPS |
-| `No module named 'docx'` | 运行 `pip install python-docx` |
+---
 
 ## 项目结构
 
 ```
-├── WordFormatter.py         # PyQt6 入口
-├── main_window.py           # 主窗口逻辑
-├── frameless_window.py      # 无边框窗口基类
-├── title_bar.py             # 自定义标题栏组件
-├── theme.py                 # 浅色/深色/跟随系统主题
-├── engine.py                # 排版引擎（docx 格式化、doc 转换、批量处理）
-├── models.py                # 数据模型（FormatProfile, PageConfig 等）
-├── worker.py                # QThread 后台工作线程
-├── ui/
-│   ├── main_window.ui       # Qt Designer 界面布局
-│   └── icons/               # 界面图标（SVG）
-├── WordFormatter.ico        # 应用图标（5 尺寸）
-├── WordFormatter.spec       # PyInstaller 打包配置
-├── requirements.txt         # 依赖列表
-└── README.md
+WordFormatter/
+├── frontend/                     # WinUI 3 前端 (.NET 9)
+│   ├── App.xaml / App.xaml.cs    # 应用入口 + 后端健康检测 + WPS/WebView2 预热
+│   ├── MainWindow.xaml(.cs)      # 主窗口（三栏自适应布局）
+│   ├── Views/                    # 页面视图（12 个）
+│   │   ├── PageSettingsView      # 页面设置
+│   │   ├── BodyStyleView         # 正文样式
+│   │   ├── HeadingStyleView      # 标题样式
+│   │   ├── HeaderFooterView      # 页眉页脚
+│   │   ├── PictureSettingsView   # 图片设置（完整实现）
+│   │   ├── TableSettingsView     # 表格设置（完整实现）
+│   │   ├── AdvancedSettingsView  # 高级设置
+│   │   ├── AboutView             # 关于软件
+│   │   ├── PreviewWindow         # PDF 预览窗口（WebView2 + PDF.js）
+│   │   ├── FormatControlView     # 排版控制卡片
+│   │   ├── ResultHistoryView     # 结果与历史卡片
+│   │   └── TemplateManagementView# 模板管理
+│   ├── ViewModels/               # MVVM ViewModel（13 个）
+│   │   ├── MainViewModel         # 统一 DataContext + SharedProfile
+│   │   ├── PageSettingsVm ~ TableSettingsVm  # 6 个 section VM
+│   │   ├── FormatViewModel       # 排版控制 + 模板加载
+│   │   ├── TemplateManagementVm  # 模板管理
+│   │   └── ...                   # Files, History, Settings 等
+│   ├── Controls/                 # 自定义控件（7 个）
+│   │   ├── TitleBar / NavBar / ItemSelector  # 标题栏 + 导航栏
+│   │   ├── StatusBar / ConfigCard            # 状态栏 + 配置卡片
+│   │   └── NumericTextBox                    # 数字输入控件
+│   ├── Services/                 # 前端服务
+│   │   ├── ApiService.cs         # HTTP 客户端（18 个 API 方法）
+│   │   ├── DocumentPreviewService # PDF 预览策略（WPS/Word COM）
+│   │   ├── WpsPdfConverter       # WPS COM 转换器
+│   │   ├── WordPdfConverter      # Word COM 转换器
+│   │   └── ThemeService / TrayIconService / FontSizeConverter
+│   ├── Models/                   # DTO 定义（7 个子目录，22 个文件）
+│   ├── Styles/LightTheme.xaml    # 浅色主题（Office 专业风格）
+│   ├── Assets/pdfjs/             # PDF.js 渲染引擎
+│   ├── Launcher/                 # C# 启动器（替代 bat）
+│   └── TrimmerRoots.xml          # .NET 裁剪保留规则
+│
+├── backend/                      # FastAPI 后端 (Python)
+│   ├── server.py                 # 入口 + CORS + 7 个路由注册
+│   ├── api/                      # API 路由层（8 个文件）
+│   │   ├── health / files / profile / templates / format
+│   │   └── history / preview
+│   ├── services/                 # 业务服务层
+│   │   ├── file_service.py       # 文件管理
+│   │   ├── format_service.py     # 排版任务调度
+│   │   └── template_service.py   # 模板 CRUD
+│   ├── formatter/                # 排版引擎（8 个模块）
+│   │   ├── engine.py             # 排版主控（7 步编排）
+│   │   ├── page.py               # 页面规则（含页眉页脚字体）
+│   │   ├── paragraph.py          # 段落规则（行距/缩进/多单位）
+│   │   ├── heading.py            # 标题规则（1-6 级）
+│   │   ├── image.py              # 图片规则（尺寸/环绕/对齐/压缩）
+│   │   ├── table.py              # 表格规则（600+ 行完整实现）
+│   │   ├── header_footer.py      # 页眉页脚（遍历所有 section）
+│   │   └── font.py               # 字体工具
+│   ├── history/manager.py        # 历史记录持久化
+│   ├── preview/generator.py      # 预览文本生成
+│   ├── config/manager.py         # 设置管理
+│   └── utils/                    # 工具模块
+│       ├── app_paths.py          # 数据目录路径（%LOCALAPPDATA%）
+│       ├── logger.py             # 日志（按分类分文件 + 按日期归档）
+│       └── response.py           # 统一响应格式
+│
+├── shared/                       # 前后端共享契约
+│   ├── schemas.py                # 17 个 Pydantic DTO
+│   ├── constants.py              # 常量（字号/纸张/错误码）
+│   └── version.py                # VERSION = "2.0"
+│
+├── memory-bank/                  # 项目设计文档（8 个文件）
+├── screenshots/                  # 界面截图
+├── tests/                        # 测试（66 passed, 3 skipped）
+│   ├── test_api.py               # API 集成测试
+│   ├── test_integration_flow.py  # 端到端流程测试
+│   └── test_paragraph_indent.py  # 段落缩进专项测试
+│
+├── requirements.txt              # Python 依赖
+├── run.bat                       # 开发一键启动
+└── WordFormatter.sln
 ```
 
-## 架构
-
-```
-┌──────────────────────────────────────────┐
-│              WordFormatter.py             │
-│          PyQt6 入口 / 全局配置            │
-└────────────────┬─────────────────────────┘
-                 │
-    ┌────────────┼────────────┐
-    ▼            ▼            ▼
-┌───────┐  ┌──────────┐  ┌────────┐
-│theme  │  │title_bar │  │frame-  │
-│ .py   │  │   .py    │  │less    │
-│ 主题  │  │自定义标题│  │窗口基类│
-└───────┘  └──────────┘  └────────┘
-                 │
-    ┌────────────▼────────────┐
-    │     main_window.py      │
-    │  Qt Designer .ui 加载    │
-    └────────┬────────────────┘
-             │ signals / slots
-    ┌────────▼──────┐   ┌──────────┐
-    │   worker.py   │──▶│ engine.py │
-    │ QThread 后台  │   │  排版引擎  │
-    └───────────────┘   └────┬─────┘
-                             │
-                      ┌──────▼──────┐
-                      │  models.py   │
-                      │  数据模型    │
-                      └─────────────┘
-```
-
-- **WordFormatter.py** — 应用入口，初始化 QApplication、全局字体、窗口图标
-- **theme.py** — 主题管理器，支持浅色/深色/跟随系统，基于 Apple Design 配色
-- **title_bar.py** — 自定义标题栏，最小化/最大化/关闭按钮，窗口拖动
-- **frameless_window.py** — 无边框窗口基类，原生缩放、边缘拖拽调整
-- **main_window.py** — 主界面，加载 Qt Designer `.ui`，参数绑定与排版驱动
-- **engine.py** — 排版核心，处理 `.docx` 格式化、`.doc` → `.docx` 转换（COM）
-- **worker.py** — QThread 后台任务，信号报告进度/状态/结果
-- **models.py** — 纯数据层，`FormatProfile` / `PageConfig` / `BodyConfig` 等
+---
 
 ## 技术栈
 
-- `PyQt6` — GUI 框架，自定义无边框窗口 + 主题系统
-- `python-docx` — `.docx` 读写
-- `win32com` — `.doc` 格式转换（调用 Word / WPS COM）
-- `PyInstaller` — 打包为独立 exe
+| 层 | 技术 | 用途 |
+|----|------|------|
+| 前端 | WinUI 3 / .NET 9 / C# 13 | Windows 原生界面 |
+| 前端 | CommunityToolkit.Mvvm 8.4 | MVVM 源代码生成 |
+| 前端 | WebView2 + PDF.js 4.x | PDF 预览渲染 |
+| 后端 | Python 3.14 + FastAPI | REST API |
+| 后端 | python-docx | Word 排版引擎 |
+| 后端 | Pillow | 图片压缩 |
+| 后端 | PyInstaller 6.21 | 后端打包为独立 EXE |
+| 通信 | HTTP REST + JSON (camelCase) | 127.0.0.1:8765 |
+| 打包 | Inno Setup 6 | 安装包制作 |
 
-## 打包
+---
 
-```bash
-pip install pyinstaller
-pyinstaller WordFormatter.spec
+## 数据存储
+
+所有运行时数据存储在用户目录下，不受安装目录（Program Files）权限限制：
+
 ```
+%LOCALAPPDATA%\WordFormatter\
+├── templates\        # 模板文件（.json）
+├── history\          # 历史记录（.json）
+├── logs\             # 运行日志（按用途分文件 + 按日期归档）
+├── preview\          # PDF 预览缓存
+└── settings.json     # 软件设置
+```
+
+日志分类：`app.log`（前端）、`backend.log`（API/Service）、`format.log`（排版任务）、`error.log`（异常汇总）。每日午夜自动归档，保留 30+90 天。
+
+---
+
+## 更新日志
+
+详见 [CHANGELOG.md](CHANGELOG.md)。
+
+---
 
 ## License
 
-MIT © Dean Chang
+MIT

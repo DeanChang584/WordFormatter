@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="WordFormatterUI.Controls.ConfigCard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    x:Name="CardRoot">
+
+    <!--
+        ConfigCard: reusable configuration section card.
+        design-document §6: rounded 8px, themed background,
+        vertical layout with title → content → action buttons.
+
+        Content is injected via the ContentPresenter.
+        Action buttons are shown/hidden via ShowActions DP.
+    -->
+        <Border
+            CornerRadius="8"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            Padding="0,16,24,24">
+
+        <Grid RowSpacing="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Row 0: Section title -->
+            <TextBlock
+                x:Name="TitleBlock"
+                Grid.Row="0"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Text="{x:Bind Title, Mode=OneWay}"
+                Margin="0,0,0,0" />
+
+            <!-- Row 1: Injected content (from ContentPresenter) -->
+            <ContentPresenter
+                x:Name="CardContentPresenter"
+                Grid.Row="1"
+                Content="{x:Bind Content, Mode=OneWay}" />
+
+        </Grid>
+    </Border>
+</UserControl>

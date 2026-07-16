@@ -33,8 +33,17 @@ output/
 frontend/bin/
 frontend/obj/
 frontend/AppPackages/
+frontend/Launcher/bin/
+frontend/Launcher/obj/
 *.msix
 *.appx
+
+# PyInstaller
+*.spec
+
+# Inno Setup / Packaging
+scripts/backend.spec
+scripts/*.iss
 
 # Testing
 .pytest_cache/

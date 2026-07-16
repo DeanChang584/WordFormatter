@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="WordFormatterUI.Views.ResultHistoryView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    x:Name="ViewRoot">
+
+    <!--
+        ResultHistoryView: post-task results & history (design-document §7.3).
+
+        Shows:
+          • Failed file details (expandable, from last task)
+          • History records (collapsible, last 20 tasks with reuse)
+
+        NOTE: Outer card Border is provided by MainWindow.xaml wrapper.
+    -->
+
+    <StackPanel Spacing="8">
+
+        <!-- ── Panel: shown only when FormatVm.HasResults ────────── -->
+        <StackPanel x:Name="HasResultsPanel" Visibility="Collapsed" Spacing="6">
+
+            <!-- Result summary (duplicate of FormatControlView for this card) -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                    <TextBlock x:Name="SummaryOkLabel" Foreground="{ThemeResource SystemFillColorSuccessBrush}" FontSize="12" />
+                    <TextBlock x:Name="SummaryFailLabel" Foreground="{ThemeResource SystemFillColorCriticalBrush}" FontSize="12" />
+                </StackPanel>
+                <TextBlock
+                    Grid.Column="1"
+                    x:Name="SummaryElapsedLabel"
+                    HorizontalAlignment="Right"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    FontSize="12" />
+            </Grid>
+
+            <!-- ── View failed files (expandable) ────────────────── -->
+            <Button
+                x:Name="ToggleFailedFilesBtn"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Left"
+                Click="ToggleFailedFiles_Click">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock x:Name="FailedFilesArrow" Text="▶" FontSize="10" VerticalAlignment="Center" />
+                    <TextBlock x:Name="FailedFilesLabel" Text="查看失败文件 (0)" />
+                </StackPanel>
+            </Button>
+
+            <StackPanel x:Name="FailedFilesPanel" Visibility="Collapsed" Spacing="4">
+                <!-- Populated in code-behind from FormatVm.Results -->
+            </StackPanel>
+        </StackPanel>
+
+        <!-- ── History section (collapsible) ────────────────────── -->
+       
+        <Button
+            x:Name="ToggleHistoryBtn"
+            HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Left"
+            Click="ToggleHistory_Click">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <TextBlock x:Name="HistoryArrow" Text="▶" FontSize="10" VerticalAlignment="Center" />
+                <TextBlock x:Name="HistoryTitle" Text="历史记录 (0)" />
+            </StackPanel>
+        </Button>
+
+        <StackPanel x:Name="HistoryPanel" Visibility="Collapsed" Spacing="6">
+            <!-- Scrollable history items (MaxHeight ~3 records) -->
+            <ScrollViewer MaxHeight="176" VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="HistoryItemsPanel" Spacing="0" />
+            </ScrollViewer>
+
+            <TextBlock
+                x:Name="HistoryEmptyLabel"
+                Text="暂无历史记录"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                FontSize="12"
+                Visibility="Collapsed" />
+
+            <Button
+                x:Name="ClearHistoryBtn"
+                HorizontalAlignment="Stretch"
+                Content="清空历史"
+                Visibility="Collapsed"
+                Click="ClearHistory_Click" />
+        </StackPanel>
+
+    </StackPanel>
+</UserControl>

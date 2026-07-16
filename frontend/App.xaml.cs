@@ -1,15 +1,22 @@
 using Microsoft.UI.Xaml;
 using WordFormatterUI.Services;
+using System;
+using System.Runtime.InteropServices;
 
 namespace WordFormatterUI;
 
 public partial class App : Application
 {
     private static readonly string LogPath = System.IO.Path.Combine(
-        AppContext.BaseDirectory, "startup.log");
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "WordFormatter", "startup.log");
 
     public static ApiService Api { get; private set; } = null!;
     public static Window MainWindow { get; private set; } = null!;
+    public static TrayIconService? TrayIcon { get; private set; }
+    private static readonly TaskCompletionSource<bool> _backendReadyTcs = new();
+    /// <summary>Wait for backend health check to pass (used by MainViewModel).</summary>
+    public static Task WaitForBackendAsync() => _backendReadyTcs.Task;
 
     private static void Log(string msg)
     {
@@ -45,18 +52,55 @@ public partial class App : Application
         try
         {
             MainWindow = new MainWindow();
+            MainWindow.ExtendsContentIntoTitleBar = true;
             Log("OnLaunched - MainWindow created");
             MainWindow.Activate();
             Log("OnLaunched - MainWindow activated");
 
+            // Initialize system tray icon
+            try
+            {
+                TrayIcon = new TrayIconService(MainWindow, "WordFormatter");
+                TrayIcon.ShowWindowRequested += () =>
+                {
+                    MainWindow.DispatcherQueue.TryEnqueue(() =>
+                    {
+                        MainWindow.Activate();
+                        // Bring to foreground via native Win32
+                        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(MainWindow);
+                        ShowWindow(hwnd, 1); // SW_SHOWNORMAL
+                        SetForegroundWindow(hwnd);
+                    });
+                };
+                TrayIcon.Initialize();
+                Log("OnLaunched - TrayIconService initialized");
+            }
+            catch (Exception ex)
+            {
+                Log($"OnLaunched - TrayIcon initialization failed (non-fatal): {ex.Message}");
+            }
+
+            // Ensure tray icon cleanup on exit
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => TrayIcon?.Dispose();
+
             // Fire-and-forget backend health check (non-blocking)
             _ = PollBackendHealthAsync();
+
+            // Pre-warm WPS COM + WebView2 in the background
+            Services.DocumentPreviewService.WarmUp();
+            _ = Views.PreviewWindow.WarmUpAsync();
         }
         catch (Exception ex)
         {
             Log($"OnLaunched - EXCEPTION: {ex}");
         }
     }
+
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
 
     private async System.Threading.Tasks.Task PollBackendHealthAsync()
     {
@@ -67,6 +111,7 @@ public partial class App : Application
                 if (await Api.HealthAsync())
                 {
                     Log($"Backend ready after {(i + 1) * 500}ms");
+                    _backendReadyTcs.TrySetResult(true);
                     return;
                 }
             }
@@ -74,6 +119,7 @@ public partial class App : Application
             await System.Threading.Tasks.Task.Delay(500);
         }
         Log("Backend NOT ready after 15s");
+        _backendReadyTcs.TrySetResult(true); // allow InitializeAsync to proceed
 
         // Show error on UI thread
         MainWindow?.DispatcherQueue.TryEnqueue(async () =>

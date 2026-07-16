@@ -1,13 +1,17 @@
-"""
-Word Formatter — FastAPI Backend Server
-入口文件：启动 FastAPI 服务，注册所有路由。
+"""Word Formatter — FastAPI backend server (entry point).
+
+Initializes the FastAPI application, configures CORS, and registers the
+API routers from the ``backend.api`` package. Run with:
+
+    python -m uvicorn backend.server:app --port 8765
 """
 
 import sys
-import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
-# 确保项目根目录在 sys.path 中
+# Ensure the project root is importable so `shared` and `backend` packages
+# resolve regardless of the current working directory.
 _ROOT = Path(__file__).parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -15,20 +19,52 @@ if str(_ROOT) not in sys.path:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from shared.schemas import HealthResponse
-from backend.routes import profile, files, format_tasks
+from shared.version import VERSION
+from backend.utils.logger import get_logger
+from backend.api import health
+from backend.api import files
+from backend.api import profile
+from backend.api import templates
+from backend.api import format as format_api
+from backend.api import history
+from backend.api import preview
 
 # ============================================================
-# FastAPI App
+# Configuration
+# ============================================================
+
+HOST = "127.0.0.1"
+PORT = 8765
+
+logger = get_logger("backend.server", category="backend")
+
+logger.info("Application starting")
+
+
+# ============================================================
+# Lifespan — startup / shutdown hooks
+# ============================================================
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Listening on %s:%s", HOST, PORT)
+    yield
+    logger.info("Application shutting down")
+
+
+# ============================================================
+# FastAPI application
 # ============================================================
 
 app = FastAPI(
     title="Word Formatter API",
-    version="1.0.0",
-    description="Word Formatter 后端服务",
+    version=VERSION,
+    description="Word Formatter backend service",
+    lifespan=lifespan,
 )
 
-# CORS（WinUI 3 通过 HTTP 访问）
+# CORS — the WinUI 3 client talks to this service over local HTTP.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -36,22 +72,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 注册路由
-app.include_router(profile.router, prefix="/api", tags=["profile"])
+# ============================================================
+# Router registration (backend.api layer)
+# ============================================================
+
+app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(files.router, prefix="/api", tags=["files"])
-app.include_router(format_tasks.router, prefix="/api", tags=["format"])
+app.include_router(profile.router, prefix="/api", tags=["profile"])
+app.include_router(templates.router, prefix="/api", tags=["templates"])
+app.include_router(format_api.router, prefix="/api", tags=["format"])
+app.include_router(history.router, prefix="/api", tags=["history"])
+app.include_router(preview.router, prefix="/api", tags=["preview"])
 
-
-@app.get("/api/health", response_model=HealthResponse)
-async def health():
-    """健康检查"""
-    return HealthResponse(status="ok")
+logger.info("FastAPI initialized")
 
 
 # ============================================================
-# 入口
+# Entry point
 # ============================================================
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.server:app", host="127.0.0.1", port=8765, reload=False)
+
+    uvicorn.run("backend.server:app", host=HOST, port=PORT, reload=False)

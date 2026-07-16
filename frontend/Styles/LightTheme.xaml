@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============================================================
+         Light Theme — Office/WPS professional style
+         Accent: #005FBA  |  Background: #FFFFFF
+         Text: #201F1E / #323130 / #605E5C
+         Border: #D1D1D1  |  Divider: #EDEBE9
+         ============================================================ -->
+
+    <!-- ── Navigation Bar ───────────────────────────────────── -->
+    <SolidColorBrush x:Key="NavBarBackground" Color="#FAFAFA" />
+    <SolidColorBrush x:Key="NavItemSelectedBackground" Color="#E8F0FE" />
+    <SolidColorBrush x:Key="NavItemSelectedForeground" Color="#005FBA" />
+    <SolidColorBrush x:Key="NavItemHoverBackground" Color="#F5F5F5" />
+    <SolidColorBrush x:Key="NavItemDefaultIcon" Color="#605E5C" />
+    <SolidColorBrush x:Key="NavItemDefaultText" Color="#201F1E" />
+
+    <!-- ── File List Drop Area ──────────────────────────────── -->
+    <SolidColorBrush x:Key="FileListBorderBrush" Color="#D1D1D1" />
+
+</ResourceDictionary>

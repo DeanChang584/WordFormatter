@@ -768,9 +768,11 @@ GET /api/format/result/123456
 
 ## 10. 预览接口
 
+### 10.1 参数摘要预览（Level 1）
+
 ### `POST /api/preview`
 
-生成当前配置的预览。第一阶段返回参数摘要文本；后续版本可扩展真实 Word 页面图片预览。
+生成当前配置的参数摘要文本。
 
 **请求**：
 
@@ -786,6 +788,8 @@ Content-Type: application/json
 }
 ```
 
+> `file` 可选（默认空字符串）。`profile` 可以是模板 ID 字符串或完整 ProfileConfig 对象。
+
 **响应**：
 
 ```json
@@ -795,6 +799,72 @@ Content-Type: application/json
     "data": {
         "preview": "【纸张】A4 纵向\n【正文】宋体 小四，行距1.5倍，首行缩进2字符\n..."
     }
+}
+```
+
+### 10.2 PDF 真实预览（Level 2）
+
+### `POST /api/preview/pdf`
+
+启动 PDF 预览任务。后端执行 format_docx 生成格式化后的 .docx 文件，前端通过 WPS/Word COM 转为 PDF 并在 WebView2 + PDF.js 中渲染。
+
+**请求**：
+
+```
+POST /api/preview/pdf
+Content-Type: application/json
+```
+
+```json
+{
+    "file": "C:/demo.docx",
+    "profile": "default"
+}
+```
+
+> `file` 必填。
+
+**响应**（HTTP 202）：
+
+```json
+{
+    "success": true,
+    "code": 0,
+    "data": {
+        "taskId": "preview_xxx"
+    }
+}
+```
+
+### `GET /api/preview/pdf/{task_id}`
+
+轮询 PDF 预览任务状态。
+
+**响应**：
+
+```json
+{
+    "success": true,
+    "code": 0,
+    "data": {
+        "state": "completed",
+        "previewPath": "C:/temp/preview_xxx.docx",
+        "error": null
+    }
+}
+```
+
+### `POST /api/preview/pdf/{task_id}/cancel`
+
+取消进行中的 PDF 预览任务。
+
+**响应**：
+
+```json
+{
+    "success": true,
+    "code": 0,
+    "message": "Task cancelled"
 }
 ```
 
@@ -949,57 +1019,100 @@ Content-Type: application/json
 ```json
 {
     "page": {
-        "paper_size": "A4",
+        "paperSize": "A4",
         "orientation": "portrait",
-        "margin_top": 2.54,
-        "margin_bottom": 2.54,
-        "margin_left": 3.17,
-        "margin_right": 3.17,
-        "unit": "cm"
+        "marginTop": 25.4,
+        "marginBottom": 25.4,
+        "marginLeft": 31.7,
+        "marginRight": 31.7,
+        "pageNumber": true,
+        "customWidth": 210.0,
+        "customHeight": 297.0,
+        "documentGrid": {
+            "mode": "无网格",
+            "linesPerPage": 30,
+            "charsPerLine": 35,
+            "adjustRightIndent": true,
+            "alignToGrid": true
+        }
     },
-    "header_footer": {
-        "header_text": "",
-        "header_font": "宋体",
-        "header_size": 10,
-        "footer_text": "第{page}页",
-        "footer_font": "宋体",
-        "footer_size": 9,
-        "alignment": "center"
+    "headerFooter": {
+        "fontCn": "宋体",
+        "fontEn": "Times New Roman",
+        "fontSize": 10.5,
+        "fontStyle": "normal",
+        "alignment": "center",
+        "headerDistance": 15.0,
+        "footerDistance": 17.5,
+        "headerDistanceUnit": "mm",
+        "footerDistanceUnit": "mm"
     },
     "body": {
-        "font_cn": "宋体",
-        "font_western": "Times New Roman",
-        "size": 12,
-        "bold": false,
-        "italic": false,
-        "underline": false,
+        "fontCn": "宋体",
+        "fontEn": "Times New Roman",
+        "fontSize": 12.0,
+        "fontStyle": "normal",
         "alignment": "justify",
-        "line_spacing": 1.5,
-        "space_before": 0,
-        "space_after": 0,
-        "first_line_indent": 2,
-        "indent_unit": "char"
+        "lineSpacing": 1.5,
+        "lineSpacingMode": "multiple",
+        "lineSpacingUnit": "pt",
+        "indentType": "firstLine",
+        "indentValue": 2.0,
+        "indentUnit": "字符",
+        "spaceBefore": 0.0,
+        "spaceAfter": 0.0,
+        "spaceBeforeUnit": "行",
+        "spaceAfterUnit": "行"
     },
     "heading": {
-        "h1": { ... },
-        "h2": { ... },
-        "h3": { ... },
-        "h4": { ... },
-        "h5": { ... },
-        "h6": { ... }
+        "1": { "level": 1, "fontCn": "黑体", "fontEn": "Times New Roman", "fontSize": 22.0, "fontStyle": "bold", "fontColor": "#000000", "alignment": "left", "lineSpacing": 1.5, "lineSpacingMode": "multiple", "indentType": "none", "indentValue": 0.0, "indentUnit": "字符", "spaceBefore": 1.0, "spaceAfter": 1.0, "spaceBeforeUnit": "行", "spaceAfterUnit": "行" },
+        "2": { "...": "..." },
+        "3": { "...": "..." },
+        "4": { "...": "..." },
+        "5": { "...": "..." },
+        "6": { "...": "..." }
     },
-    "image": {
-        "width": 12,
-        "width_unit": "cm",
+    "picture": {
+        "sizeMode": "fixedWidth",
+        "width": 12.0,
+        "widthUnit": "cm",
+        "height": 8.0,
+        "heightUnit": "cm",
+        "keepAspectRatio": true,
+        "noEnlarge": false,
         "alignment": "center",
-        "keep_aspect_ratio": true
+        "wrappingStyle": "inline",
+        "compressionQuality": 220,
+        "maxPixels": 1200,
+        "autoCompress": true
     },
     "table": {
-        "center_table": true,
-        "auto_split": true,
-        "header_font_cn": "黑体",
-        "header_size": 10,
-        "border_style": "all"
+        "tableAlignment": "center",
+        "widthMode": "auto",
+        "widthValue": 0.0,
+        "widthUnit": "cm",
+        "autoFitColumns": true,
+        "rowHeightMode": "auto",
+        "rowHeight": 0.8,
+        "rowHeightUnit": "cm",
+        "headerFontCn": "宋体",
+        "headerFontEn": "Times New Roman",
+        "headerSize": 10.5,
+        "headerBold": true,
+        "headerTextCenter": true,
+        "headerBgColor": "",
+        "indentType": "none",
+        "indentValue": 0.0,
+        "indentUnit": "字符",
+        "cellAlignH": "left",
+        "cellAlignV": "middle",
+        "borderStyle": "all",
+        "borderColor": "#000000",
+        "borderWidth": 0.5,
+        "cellMargin": 0.19,
+        "cellMarginUnit": "cm",
+        "autoSplit": true,
+        "repeatHeader": false
     }
 }
 ```

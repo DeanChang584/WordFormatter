@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="WordFormatterUI.Controls.ItemSelector"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Height="40"
+    x:Name="SelectorRoot">
+
+    <!--
+        ItemSelector: single navigation-item row.
+        Win11-style: no blue accent bar; selection = light-gray bg + blue icon/text.
+        VisualStateManager drives Normal / PointerOver / Selected.
+    -->
+    <Grid
+        x:Name="ItemGrid"
+        CornerRadius="8"
+        Padding="0"
+        Background="Transparent"
+        PointerEntered="ItemGrid_PointerEntered"
+        PointerExited="ItemGrid_PointerExited">
+
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="SelectionStates">
+                <VisualState x:Name="Normal" />
+                <VisualState x:Name="Selected">
+                    <VisualState.Setters>
+                        <Setter Target="ItemGrid.Background" Value="{ThemeResource NavItemSelectedBackground}" />
+                        <Setter Target="ItemIcon.Foreground" Value="{ThemeResource NavItemSelectedForeground}" />
+                        <Setter Target="ItemText.Foreground" Value="{ThemeResource NavItemSelectedForeground}" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+            <VisualStateGroup x:Name="HoverStates">
+                <VisualState x:Name="NoHover" />
+                <VisualState x:Name="PointerOver">
+                    <VisualState.Setters>
+                        <Setter Target="ItemGrid.Background" Value="{ThemeResource NavItemHoverBackground}" />
+                        <Setter Target="ItemIcon.Foreground" Value="{ThemeResource NavItemSelectedForeground}" />
+                        <Setter Target="ItemText.Foreground" Value="{ThemeResource NavItemSelectedForeground}" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+        <!-- Icon (centered horizontally) + Text -->
+        <Grid ColumnSpacing="8" Padding="12,0,12,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <FontIcon
+                x:Name="ItemIcon"
+                Grid.Column="0"
+                FontFamily="Segoe Fluent Icons"
+                FontSize="16"
+                Glyph="&#xE706;"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Foreground="{ThemeResource NavItemDefaultIcon}" />
+            <TextBlock
+                x:Name="ItemText"
+                Grid.Column="1"
+                FontSize="14"
+                VerticalAlignment="Center"
+                Foreground="{ThemeResource NavItemDefaultText}"
+                TextTrimming="CharacterEllipsis" />
+        </Grid>
+    </Grid>
+</UserControl>

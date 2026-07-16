@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="WordFormatterUI.Views.TableSettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:WordFormatterUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    x:Name="ViewRoot">
+
+    <controls:ConfigCard Title="表格样式">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="8" Padding="0,0,0,16">
+
+                <!-- 布局方式 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="布局方式" />
+                    <ComboBox Grid.Column="1" x:Name="AlignmentBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="AlignmentBox_SelectionChanged" />
+                </Grid>
+
+                <!-- 表格宽度 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="表格宽度" />
+                    <ComboBox Grid.Column="1" x:Name="WidthModeBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="WidthModeBox_SelectionChanged" />
+                    <controls:NumericTextBox Grid.Column="2" x:Name="WidthValueBox"
+                                              HorizontalAlignment="Stretch"
+                                              ValueChanged="WidthValueBox_ValueChanged" />
+                    <ComboBox Grid.Column="3" x:Name="WidthUnitBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="WidthUnitBox_SelectionChanged" />
+                </Grid>
+
+                <!-- 自动列宽 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="自动列宽" />
+                    <CheckBox Grid.Column="1" x:Name="AutoFitCheck"
+                              Content="根据内容调整" VerticalAlignment="Center"
+                              Checked="AutoFitCheck_Changed"
+                              Unchecked="AutoFitCheck_Changed" />
+                </Grid>
+                <!-- 表格行高 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="表格行高" />
+                    <ComboBox Grid.Column="1" x:Name="RowHeightModeBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="RowHeightModeBox_SelectionChanged" />
+                    <controls:NumericTextBox Grid.Column="2" x:Name="RowHeightBox"
+                                              HorizontalAlignment="Stretch"
+                                              ValueChanged="RowHeightBox_ValueChanged" />
+                    <ComboBox Grid.Column="3" x:Name="RowHeightUnitBox" Height="32" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="RowHeightUnitBox_SelectionChanged">
+                        <ComboBoxItem>厘米</ComboBoxItem>
+                        <ComboBoxItem>毫米</ComboBoxItem>
+                    </ComboBox>
+                </Grid>
+
+                <!-- 中文字体 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="中文字体" />
+                    <ComboBox Grid.Column="1" x:Name="HeaderFontCnBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="HeaderFontCnBox_SelectionChanged" />
+                </Grid>
+
+                <!-- 西文字体 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="西文字体" />
+                    <ComboBox Grid.Column="1" x:Name="HeaderFontEnBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="HeaderFontEnBox_SelectionChanged" />
+                </Grid>
+
+                <!-- 字号 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="字号" />
+                    <ComboBox Grid.Column="1" x:Name="HeaderSizeBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="HeaderSizeBox_SelectionChanged" />
+                </Grid>
+
+                <!-- 字形（应用到整个表格） -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="64" />
+                        <ColumnDefinition Width="64" />
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="字形" />
+                    <CheckBox Grid.Column="1" x:Name="FontBoldCheck" Content="加粗"
+                              VerticalAlignment="Center"
+                              Checked="FontBoldCheck_Changed"
+                              Unchecked="FontBoldCheck_Changed" />
+                    <CheckBox Grid.Column="2" x:Name="FontItalicCheck" Content="斜体"
+                              VerticalAlignment="Center"
+                              Checked="FontItalicCheck_Changed"
+                              Unchecked="FontItalicCheck_Changed" />
+                    <CheckBox Grid.Column="3" x:Name="FontUnderlineCheck" Content="下划线"
+                              VerticalAlignment="Center"
+                              Checked="FontUnderlineCheck_Changed"
+                              Unchecked="FontUnderlineCheck_Changed" />
+                </Grid>
+
+                <!-- 特殊格式（缩进） -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="特殊格式" />
+                    <ComboBox Grid.Column="1" x:Name="IndentTypeBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="IndentTypeBox_SelectionChanged" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                                x:Name="IndentOptionsPanel">
+                        <controls:NumericTextBox x:Name="IndentValueBox" Width="80"
+                                                  HorizontalAlignment="Stretch"
+                                                  ValueChanged="IndentValueBox_ValueChanged" />
+                        <ComboBox x:Name="IndentUnitBox" Height="32" Width="80"
+                                  HorizontalAlignment="Stretch" SelectedIndex="0"
+                                  SelectionChanged="IndentUnitBox_SelectionChanged">
+                            <ComboBoxItem>字符</ComboBoxItem>
+                            <ComboBoxItem>厘米</ComboBoxItem>
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 水平对齐 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="水平对齐" />
+                    <ComboBox Grid.Column="1" x:Name="CellAlignHBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="CellAlignHBox_SelectionChanged" />
+                </Grid>
+
+                <!-- 垂直对齐 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="垂直对齐" />
+                    <ComboBox Grid.Column="1" x:Name="CellAlignVBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="CellAlignVBox_SelectionChanged" />
+                </Grid>
+
+                <!-- 背景颜色 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="背景颜色" />
+                    <ComboBox Grid.Column="1" x:Name="HeaderBgColorBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="HeaderBgColorBox_SelectionChanged" />
+                </Grid>
+
+                <!-- 边框样式 + 边框颜色 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="边框样式" />
+                    <ComboBox Grid.Column="1" x:Name="BorderStyleBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="BorderStyleBox_SelectionChanged" />
+                    <ComboBox Grid.Column="2" x:Name="BorderColorBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="BorderColorBox_SelectionChanged" />
+                </Grid>
+
+                <!-- 边框粗细 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="边框粗细" />
+                    <controls:NumericTextBox Grid.Column="1" x:Name="BorderWidthBox"
+                                              HorizontalAlignment="Stretch"
+                                              Step="0.5" DecimalPlaces="1"
+                                              ValueChanged="BorderWidthBox_ValueChanged" />
+                    <ComboBox Grid.Column="2" Height="32" HorizontalAlignment="Stretch" SelectedIndex="0">
+                        <ComboBoxItem>磅</ComboBoxItem>
+                    </ComboBox>
+                </Grid>
+
+                <!-- 单元格边距 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="单元格边距" />
+                    <controls:NumericTextBox Grid.Column="1" x:Name="CellMarginBox"
+                                              HorizontalAlignment="Stretch"
+                                              ValueChanged="CellMarginBox_ValueChanged" />
+                    <ComboBox Grid.Column="2" x:Name="CellMarginUnitBox" Height="32" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="CellMarginUnitBox_SelectionChanged">
+                        <ComboBoxItem>厘米</ComboBoxItem>
+                        <ComboBoxItem>毫米</ComboBoxItem>
+                    </ComboBox>
+                </Grid>
+                <!-- 表头字体加粗 + 表头文字居中 + 跨页选项（合并行） -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <CheckBox x:Name="HeaderBoldCheck"
+                              Content="表头字体加粗" VerticalAlignment="Center"
+                              Checked="HeaderBoldCheck_Changed"
+                              Unchecked="HeaderBoldCheck_Changed" />
+                    <CheckBox Grid.Column="1" x:Name="HeaderTextCenterCheck"
+                              Content="表头文字居中" VerticalAlignment="Center"
+                              Checked="HeaderTextCenterCheck_Changed"
+                              Unchecked="HeaderTextCenterCheck_Changed" />
+                    <CheckBox Grid.Column="2" x:Name="AutoSplitCheck"
+                              Content="允许跨页断行" VerticalAlignment="Center"
+                              Checked="AutoSplitCheck_Changed"
+                              Unchecked="AutoSplitCheck_Changed" />
+                    <CheckBox Grid.Column="3" x:Name="RepeatHeaderCheck"
+                              Content="跨页重复表头" VerticalAlignment="Center"
+                              Checked="RepeatHeaderCheck_Changed"
+                              Unchecked="RepeatHeaderCheck_Changed" />
+                </Grid>
+
+            </StackPanel>
+        </ScrollViewer>
+    </controls:ConfigCard>
+</UserControl>

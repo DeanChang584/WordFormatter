@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="WordFormatterUI.Views.FormatControlView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    x:Name="ViewRoot">
+
+    <!--
+        FormatControlView: format task control card (design-document §7.2).
+
+        Contains template selector, output directory, preview/start/cancel
+        buttons, progress bar, and post-task result summary with retry.
+
+        NOTE: Outer card Border is provided by MainWindow.xaml wrapper.
+    -->
+
+    <StackPanel Spacing="8">
+
+        <!-- ── Template selector + save template button ─────────── -->
+        <Grid ColumnSpacing="8" Height="32">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ComboBox
+                Grid.Column="0"
+                x:Name="TemplateBox"
+                HorizontalAlignment="Stretch"
+                Height="32"
+                SelectionChanged="TemplateBox_SelectionChanged" />
+            <Button
+                Grid.Column="1"
+                x:Name="SaveTemplateBtn"
+                Content="保存配置为模板"
+                Style="{StaticResource AccentButtonStyle}"
+                HorizontalAlignment="Stretch"
+                Height="32"
+                Click="SaveTemplate_Click" />
+        </Grid>
+
+        <!-- ── Output directory ──────────────────────────────────── -->
+        <Grid Height="32" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox
+                Grid.Column="0"
+                x:Name="OutputDirBox"
+                Height="32"
+                PlaceholderText="文档输出目录"
+                TextChanged="OutputDirBox_TextChanged" />
+            <Button
+                Grid.Column="1"
+                x:Name="BrowseOutputBtn"
+                Content="选择"
+                Width="56"
+                Height="32"
+                Click="BrowseOutput_Click" />
+            <Button
+                Grid.Column="2"
+                x:Name="OpenResultBtn"
+                Content="打开"
+                Width="56"
+                Height="32"
+                Click="OpenResult_Click" />
+        </Grid>
+
+        <!-- ── Action buttons: Preview / Start / Cancel ──────────── -->
+        <StackPanel x:Name="ActionButtonsPanel" Spacing="0">
+            <Grid ColumnSpacing="8" Margin="0,24,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button
+                    Grid.Column="0"
+                    HorizontalAlignment="Stretch"
+                    x:Name="PreviewBtn"
+                    Click="Preview_Click" />
+                <Button
+                    Grid.Column="1"
+                    HorizontalAlignment="Stretch"
+                    x:Name="StartBtn"
+                    Content="开始排版"
+                    Style="{StaticResource AccentButtonStyle}"
+                    Click="Start_Click" />
+            </Grid>
+
+            <!-- Cancel button (visible only when running) -->
+            <Button
+                x:Name="CancelBtn"
+                HorizontalAlignment="Stretch"
+                Content="取消排版"
+                Visibility="Collapsed"
+                IsEnabled="False"
+                Click="Cancel_Click" />
+        </StackPanel>
+
+        <!-- ── Progress section (visible only when running) ──────── -->
+        <StackPanel x:Name="ProgressSection" Visibility="Collapsed" Spacing="4">
+            <ProgressBar
+                x:Name="ProgressBar"
+                Minimum="0"
+                Maximum="100" />
+            <TextBlock
+                x:Name="ProgressText"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                FontSize="12" />
+        </StackPanel>
+
+        <!-- ── Preview text (visible after preview) ───────────────── -->
+        <Border
+            x:Name="PreviewSection"
+            Visibility="Collapsed"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            CornerRadius="4"
+            Padding="8">
+            <ScrollViewer MaxHeight="160" VerticalScrollBarVisibility="Auto">
+                <TextBlock
+                    x:Name="PreviewTextBlock"
+                    FontSize="11"
+                    FontFamily="Cascadia Mono, Consolas, monospace"
+                    TextWrapping="Wrap" />
+            </ScrollViewer>
+        </Border>
+
+    </StackPanel>
+</UserControl>

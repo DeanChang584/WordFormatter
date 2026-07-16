@@ -37,9 +37,8 @@ from pathlib import Path
 # 路径与常量
 # ============================================================
 
-# backend/utils/logger.py -> parents[2] == 项目根目录 WordFormatter/
-_ROOT = Path(__file__).resolve().parents[2]
-LOG_DIR = _ROOT / "logs"
+from backend.utils.app_paths import LOGS_DIR as LOG_DIR, APP_DATA_DIR as _APP_DATA_DIR
+
 ARCHIVE_DIR = LOG_DIR / "archive"
 
 _LOG_LEVEL = logging.INFO

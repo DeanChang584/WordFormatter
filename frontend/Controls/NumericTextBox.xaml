@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="WordFormatterUI.Controls.NumericTextBox"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    x:Name="Root">
+
+    <!-- 统一外框（背景色 + 圆角 + 焦点高亮） -->
+    <Border
+        x:Name="ContainerBorder"
+        BorderBrush="{ThemeResource TextControlBorderBrush}"
+        BorderThickness="1"
+        CornerRadius="4"
+        UseSystemFocusVisuals="False"
+        FocusVisualPrimaryThickness="0"
+        FocusVisualSecondaryThickness="0"
+        Background="{ThemeResource TextControlBackground}"
+        MinWidth="80">
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="32" />
+            </Grid.ColumnDefinitions>
+
+            <!-- 输入框 -->
+            <TextBox
+                x:Name="InputBox"
+                Grid.Column="0"
+                Height="32"
+                BorderThickness="0"
+                Background="Transparent"
+                HorizontalContentAlignment="Right"
+                VerticalContentAlignment="Center"
+                Padding="8,6,4,6"
+                Foreground="{ThemeResource TextControlForeground}"
+                FontSize="14"
+                UseSystemFocusVisuals="False"
+                FocusVisualPrimaryThickness="0"
+                FocusVisualSecondaryThickness="0"
+                TextChanging="InputBox_TextChanging"
+                GotFocus="InputBox_GotFocus"
+                LostFocus="InputBox_LostFocus"
+                KeyDown="InputBox_KeyDown"
+                PointerWheelChanged="InputBox_PointerWheelChanged"
+                IsReadOnly="{x:Bind IsReadOnly, Mode=OneWay}"
+                PlaceholderText="{x:Bind PlaceholderText, Mode=OneWay}"
+                SelectionHighlightColor="#005FBA">
+                <!--
+                    简化控件模板：移除所有 VisualState 触发（Focused 等），
+                    使 TextBox 内部 Border 永不自行变化，避免与 ContainerBorder
+                    的焦点蓝色边框重叠。
+                -->
+                <TextBox.Style>
+                    <Style TargetType="TextBox">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="TextBox">
+                                    <Border
+                                        x:Name="BorderElement"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                        <ScrollViewer
+                                            x:Name="ContentElement"
+                                            HorizontalScrollMode="Auto"
+                                            HorizontalScrollBarVisibility="Hidden"
+                                            VerticalScrollMode="Auto"
+                                            VerticalScrollBarVisibility="Hidden"
+                                            Margin="{TemplateBinding Padding}"
+                                            AutomationProperties.AccessibilityView="Raw" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </TextBox.Style>
+            </TextBox>
+
+            <!-- 步进按钮 -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <RepeatButton
+                    Grid.Row="0"
+                    x:Name="UpButton"
+                    Width="32"
+                    Height="18"
+                    Padding="0"
+                    BorderThickness="0"
+                    Background="Transparent"
+                    Click="UpButton_Click">
+                    <FontIcon Glyph="&#xE70E;" FontSize="10" />
+                </RepeatButton>
+
+                <RepeatButton
+                    Grid.Row="1"
+                    x:Name="DownButton"
+                    Width="32"
+                    Height="18"
+                    Padding="0"
+                    BorderThickness="0"
+                    Background="Transparent"
+                    Click="DownButton_Click">
+                    <FontIcon Glyph="&#xE70D;" FontSize="10" />
+                </RepeatButton>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

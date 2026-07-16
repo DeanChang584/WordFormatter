@@ -1,31 +1,79 @@
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+using WordFormatterUI.Models;
+using WordFormatterUI.Models.Files;
+using WordFormatterUI.Models.Format;
+using WordFormatterUI.Models.History;
+using WordFormatterUI.Models.Preview;
+using WordFormatterUI.Models.Profile;
+using WordFormatterUI.Models.Templates;
 
 namespace WordFormatterUI.Services;
 
 /// <summary>
-/// HTTP client wrapper for WordFormatter backend API.
-/// All DTOs are deserialized from the same JSON contract as shared/schemas.py.
+/// HTTP client wrapper for the WordFormatter backend API.
+/// Base address: http://127.0.0.1:8765/api.
+/// All JSON uses camelCase naming (aligned with Q1 decision and
+/// shared/schemas.py Pydantic alias_generator).
+///
+/// Responsibilities: HTTP transport + JSON deserialization only.
+/// DTO definitions live in WordFormatterUI.Models.*.
 /// </summary>
 public sealed class ApiService
 {
     private readonly HttpClient _http;
-    private static readonly JsonSerializerOptions JsonOptions = new()
+
+    private static readonly JsonSerializerOptions JsonOpts = new()
     {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
     public ApiService(string baseUrl = "http://127.0.0.1:8765")
     {
-        _http = new HttpClient { BaseAddress = new Uri(baseUrl) };
+        _http = new HttpClient { BaseAddress = new Uri(baseUrl), Timeout = TimeSpan.FromSeconds(10) };
     }
 
-    // ───────────────────────── Health ─────────────────────────
+    // ───────────────────────────────────────────────────────────
+    //  Low-level helpers
+    // ───────────────────────────────────────────────────────────
 
+    private async Task<ApiResponse<T>?> GetAsync<T>(string path)
+    {
+        var resp = await _http.GetAsync(path);
+        return await resp.Content.ReadFromJsonAsync<ApiResponse<T>>(JsonOpts);
+    }
+
+    private async Task<ApiResponse<T>?> PostAsync<T>(string path, object body)
+    {
+        var resp = await _http.PostAsJsonAsync(path, body, JsonOpts);
+        return await resp.Content.ReadFromJsonAsync<ApiResponse<T>>(JsonOpts);
+    }
+
+    private async Task<ApiResponse<T>?> PostAsync<T>(string path)
+    {
+        var resp = await _http.PostAsync(path, null);
+        return await resp.Content.ReadFromJsonAsync<ApiResponse<T>>(JsonOpts);
+    }
+
+    private async Task<ApiResponse<T>?> PutAsync<T>(string path, object body)
+    {
+        var resp = await _http.PutAsJsonAsync(path, body, JsonOpts);
+        return await resp.Content.ReadFromJsonAsync<ApiResponse<T>>(JsonOpts);
+    }
+
+    private async Task<ApiResponse<T>?> DeleteAsync<T>(string path)
+    {
+        var resp = await _http.DeleteAsync(path);
+        return await resp.Content.ReadFromJsonAsync<ApiResponse<T>>(JsonOpts);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  Health
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>GET /api/health — returns true if backend is reachable.</summary>
     public async Task<bool> HealthAsync()
     {
         try
@@ -36,256 +84,208 @@ public sealed class ApiService
         catch { return false; }
     }
 
-    // ───────────────────────── Profile ─────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    //  File Management
+    // ═══════════════════════════════════════════════════════════
 
-    public async Task<ProfileDto?> GetProfileAsync()
-    {
-        return await _http.GetFromJsonAsync<ProfileDto>("/api/profile", JsonOptions);
-    }
+    // 6.1 — GET /api/files → { files: [...] }
+    public Task<ApiResponse<FileListDto>?> GetFilesAsync()
+        => GetAsync<FileListDto>("/api/files");
 
-    public async Task<bool> UpdateProfileAsync(ProfileDto profile)
-    {
-        var resp = await _http.PutAsJsonAsync("/api/profile", profile, JsonOptions);
-        return resp.IsSuccessStatusCode;
-    }
+    // 6.2 — POST /api/files/add → { count: N }
+    public Task<ApiResponse<AddCountDto>?> AddFilesAsync(IEnumerable<string> paths)
+        => PostAsync<AddCountDto>("/api/files/add", new { paths });
 
-    // ───────────────────────── Files ─────────────────────────
+    // 6.3 — POST /api/files/add-folder → { count: N }
+    public Task<ApiResponse<AddCountDto>?> AddFolderAsync(string folder, bool includeSubdir = true)
+        => PostAsync<AddCountDto>("/api/files/add-folder", new { folder, includeSubdir });
 
-    public async Task<FilesResponse?> GetFilesAsync()
-    {
-        return await _http.GetFromJsonAsync<FilesResponse>("/api/files", JsonOptions);
-    }
+    // 6.4 — POST /api/files/remove → { removed_count: N }
+    public Task<ApiResponse<AddCountDto>?> RemoveFilesAsync(IEnumerable<string> paths)
+        => PostAsync<AddCountDto>("/api/files/remove", new { paths });
 
-    public async Task<FilesResponse?> SelectFilesAsync(IEnumerable<string> paths)
-    {
-        var body = new FileSelectRequest { Paths = paths.ToList() };
-        var resp = await _http.PostAsJsonAsync("/api/files/select", body, JsonOptions);
-        return await resp.Content.ReadFromJsonAsync<FilesResponse>(JsonOptions);
-    }
-
-    public async Task<FilesResponse?> SelectFolderAsync(string folder)
-    {
-        var body = new FolderRequest { Folder = folder };
-        var resp = await _http.PostAsJsonAsync("/api/files/folder", body, JsonOptions);
-        return await resp.Content.ReadFromJsonAsync<FilesResponse>(JsonOptions);
-    }
-
-    public async Task<FilesResponse?> RemoveFilesAsync(IEnumerable<string> paths)
-    {
-        var body = new FileDeleteRequest { Paths = paths.ToList() };
-        var resp = await _http.PostAsJsonAsync("/api/files/remove", body, JsonOptions);
-        return await resp.Content.ReadFromJsonAsync<FilesResponse>(JsonOptions);
-    }
-
+    // 6.5 — DELETE /api/files → no data
     public async Task<bool> ClearFilesAsync()
     {
-        var resp = await _http.DeleteAsync("/api/files/all");
+        var resp = await _http.DeleteAsync("/api/files");
+        var body = await resp.Content.ReadFromJsonAsync<ApiResponse<object>>(JsonOpts);
+        return body?.Success == true;
+    }
+
+    // 6.6 — POST /api/files/search → { files: [...] }
+    public Task<ApiResponse<FileListDto>?> SearchFilesAsync(string keyword)
+        => PostAsync<FileListDto>("/api/files/search", new { keyword });
+
+    // 6.7 — GET /api/files/recent → { recent: [...] }
+    public Task<ApiResponse<RecentListDto>?> GetRecentFilesAsync()
+        => GetAsync<RecentListDto>("/api/files/recent");
+
+    // 6.8 — POST /api/files/pin → { pinned: [...] }
+    // TODO: Add PinnedListDto when needed.
+    // public Task<ApiResponse<...>?> PinFolderAsync(string folder)
+    //     => PostAsync<...>("/api/files/pin", new { folder });
+
+    // ═══════════════════════════════════════════════════════════
+    //  Profile
+    // ═══════════════════════════════════════════════════════════
+
+    // 7.1 — GET /api/profile → { profile: { ... } }
+    public async Task<ProfileConfigDto?> GetProfileAsync()
+    {
+        var resp = await GetAsync<ProfileResponseDto>("/api/profile");
+        return resp?.Success == true ? resp.Data?.Profile : null;
+    }
+
+    // 7.2 — PUT /api/profile
+    public async Task<bool> UpdateProfileAsync(ProfileConfigDto profileData)
+    {
+        var resp = await PutAsync<object>("/api/profile", new { profile = profileData });
+        return resp?.Success == true;
+    }
+
+    // 7.3 — POST /api/profile/reset
+    public async Task<bool> ResetProfileAsync()
+    {
+        var resp = await PostAsync<object>("/api/profile/reset");
+        return resp?.Success == true;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  Templates
+    // ═══════════════════════════════════════════════════════════
+
+    // 8.1 — GET /api/templates → { templates: [...] }
+    public Task<ApiResponse<TemplateListDto>?> GetTemplatesAsync()
+        => GetAsync<TemplateListDto>("/api/templates");
+
+    // 8.2 — POST /api/templates
+    public async Task<TemplateDto?> SaveTemplateAsync(string name, ProfileConfigDto? profile = null)
+    {
+        var resp = await PostAsync<TemplateDto>("/api/templates", new { name, profile });
+        return resp?.Success == true ? resp.Data : null;
+    }
+
+    // 8.3 — PUT /api/templates/{id}
+    public async Task<bool> UpdateTemplateAsync(string templateId, string? name = null, ProfileConfigDto? profile = null)
+    {
+        var resp = await PutAsync<object>($"/api/templates/{templateId}", new { name, profile });
+        return resp?.Success == true;
+    }
+
+    // 8.4 — DELETE /api/templates/{id}
+    public async Task<bool> DeleteTemplateAsync(string templateId)
+    {
+        var resp = await DeleteAsync<object>($"/api/templates/{templateId}");
+        return resp?.Success == true;
+    }
+
+    // 8.5 — POST /api/templates/import
+    public async Task<TemplateDto?> ImportTemplateAsync(string path)
+    {
+        var resp = await PostAsync<TemplateDto>("/api/templates/import", new { path });
+        return resp?.Success == true ? resp.Data : null;
+    }
+
+    // 8.6 — POST /api/templates/export → { exportedFile: "..." }
+    public async Task<string?> ExportTemplateAsync(string templateId, string targetPath)
+    {
+        var resp = await PostAsync<ExportResultDto>("/api/templates/export", new { templateId, targetPath });
+        return resp?.Success == true ? resp.Data?.ExportedFile : null;
+    }
+
+    // 8.7 — POST /api/templates/default
+    public async Task<bool> SetDefaultTemplateAsync(string templateId)
+    {
+        var resp = await PostAsync<object>("/api/templates/default", new { templateId });
+        return resp?.Success == true;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  Format Tasks
+    // ═══════════════════════════════════════════════════════════
+
+    // 9.1 — POST /api/format/start → { taskId: "..." }  (HTTP 202)
+    public async Task<FormatStartResultDto?> StartFormatAsync(FormatStartRequestDto request)
+    {
+        var resp = await _http.PostAsJsonAsync("/api/format/start", request, JsonOpts);
+        var body = await resp.Content.ReadFromJsonAsync<ApiResponse<FormatStartResultDto>>(JsonOpts);
+        return body?.Success == true ? body.Data : null;
+    }
+
+    // 9.2 — GET /api/format/status/{taskId}
+    public Task<ApiResponse<TaskStatusDto>?> GetFormatStatusAsync(string taskId)
+        => GetAsync<TaskStatusDto>($"/api/format/status/{taskId}");
+
+    // 9.3 — POST /api/format/cancel
+    public async Task<bool> CancelFormatAsync(string taskId)
+    {
+        var resp = await PostAsync<object>("/api/format/cancel", new { taskId });
+        return resp?.Success == true;
+    }
+
+    // 9.4 — GET /api/format/result/{taskId}
+    public Task<ApiResponse<TaskResultDto>?> GetFormatResultAsync(string taskId)
+        => GetAsync<TaskResultDto>($"/api/format/result/{taskId}");
+
+    // ═══════════════════════════════════════════════════════════
+    //  Preview
+    // ═══════════════════════════════════════════════════════════
+
+    // 10.1 — POST /api/preview → { preview: "..." }
+    public async Task<string?> GetPreviewAsync(string? file = null, object? profile = null)
+    {
+        var resp = await _http.PostAsJsonAsync("/api/preview",
+            new { file = file ?? "", profile = profile ?? "default" }, JsonOpts);
+        var body = await resp.Content.ReadFromJsonAsync<ApiResponse<PreviewDataDto>>(JsonOpts);
+        return body?.Success == true ? body.Data?.Preview : null;
+    }
+
+    //  Level 2 — POST /api/preview/pdf → taskId
+    public async Task<(PdfPreviewStartDto? Data, string? Error)> StartPdfPreviewAsync(string file, object profile)
+    {
+        var resp = await _http.PostAsJsonAsync("/api/preview/pdf",
+            new { file, profile }, JsonOpts);
+        var body = await resp.Content.ReadFromJsonAsync<ApiResponse<PdfPreviewStartDto>>(JsonOpts);
+        if (body?.Success == true)
+            return (body.Data, null);
+        return (null, body?.Message ?? "无法连接格式化服务。");
+    }
+
+    //  Level 2 — GET /api/preview/pdf/{taskId} → { state, pdfPath, error }
+    public async Task<PdfPreviewStatusDto?> GetPdfPreviewStatusAsync(string taskId)
+    {
+        var resp = await _http.GetAsync($"/api/preview/pdf/{taskId}");
+        var body = await resp.Content.ReadFromJsonAsync<ApiResponse<PdfPreviewStatusDto>>(JsonOpts);
+        return body?.Success == true ? body.Data : null;
+    }
+
+    //  Level 2 — POST /api/preview/pdf/{taskId}/cancel
+    public async Task<bool> CancelPdfPreviewAsync(string taskId)
+    {
+        var resp = await _http.PostAsync($"/api/preview/pdf/{taskId}/cancel", null);
         return resp.IsSuccessStatusCode;
     }
 
-    // ───────────────────────── Format Tasks ─────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    //  History
+    // ═══════════════════════════════════════════════════════════
 
-    public async Task<FormatStartResponse?> StartFormatAsync(FormatStartRequest request)
+    // 11.1 — GET /api/history → { history: [...] }
+    public Task<ApiResponse<HistoryListDto>?> GetHistoryAsync()
+        => GetAsync<HistoryListDto>("/api/history");
+
+    // 11.2 — GET /api/history/{id} → full record detail
+    public Task<ApiResponse<HistoryRecordDto>?> GetHistoryDetailAsync(string recordId)
+        => GetAsync<HistoryRecordDto>($"/api/history/{recordId}");
+
+    // 11.3 — DELETE /api/history → clear all
+    public async Task<bool> ClearHistoryAsync()
     {
-        var resp = await _http.PostAsJsonAsync("/api/format/start", request, JsonOptions);
-        return await resp.Content.ReadFromJsonAsync<FormatStartResponse>(JsonOptions);
+        var resp = await DeleteAsync<object>("/api/history");
+        return resp?.Success == true;
     }
 
-    public async Task<FormatProgressResponse?> GetFormatProgressAsync(string taskId)
-    {
-        return await _http.GetFromJsonAsync<FormatProgressResponse>($"/api/format/{taskId}/progress", JsonOptions);
-    }
-
-    public async Task<FormatResultResponse?> GetFormatResultAsync(string taskId)
-    {
-        return await _http.GetFromJsonAsync<FormatResultResponse>($"/api/format/{taskId}/result", JsonOptions);
-    }
-
-    // ───────────────────────── Theme ─────────────────────────
-
-    public async Task<ThemeResponse?> GetThemeAsync()
-    {
-        return await _http.GetFromJsonAsync<ThemeResponse>("/api/theme", JsonOptions);
-    }
-
-    public async Task<bool> SetThemeAsync(string mode)
-    {
-        var body = new ThemeRequest { Mode = mode };
-        var resp = await _http.PutAsJsonAsync("/api/theme", body, JsonOptions);
-        return resp.IsSuccessStatusCode;
-    }
+    // ═══════════════════════════════════════════════════════════
+    //  Settings — TODO: add when backend /api/settings is created
+    // ═══════════════════════════════════════════════════════════
 }
-
-// ═══════════════════════════════════════════════════════════
-// DTOs — mirror shared/schemas.py snake_case JSON contract
-// ═══════════════════════════════════════════════════════════
-
-#region Profile DTOs
-
-public class ProfileDto
-{
-    public PageDto Page { get; set; } = new();
-    public BodyDto Body { get; set; } = new();
-    public ParagraphDto Paragraph { get; set; } = new();
-    public Dictionary<string, HeadingDto> Headings { get; set; } = new();
-    public string OutputDir { get; set; } = "";
-}
-
-public class PageDto
-{
-    public double MarginTop { get; set; } = 25.4;
-    public double MarginBottom { get; set; } = 25.4;
-    public double MarginLeft { get; set; } = 31.8;
-    public double MarginRight { get; set; } = 31.8;
-    public string TextDirection { get; set; } = "纵向";
-    public string PaperSize { get; set; } = "A4";
-    public string MarginTopUnit { get; set; } = "mm";
-    public string MarginBottomUnit { get; set; } = "mm";
-    public string MarginLeftUnit { get; set; } = "mm";
-    public string MarginRightUnit { get; set; } = "mm";
-    public double HeaderMargin { get; set; } = 15.0;
-    public string HeaderMarginUnit { get; set; } = "mm";
-    public double FooterMargin { get; set; } = 17.5;
-    public string FooterMarginUnit { get; set; } = "mm";
-    public string SectionMode { get; set; } = "全文排版";
-}
-
-public class BodyDto
-{
-    public string FontCn { get; set; } = "宋体";
-    public string FontEn { get; set; } = "Times New Roman";
-    public double FontSize { get; set; } = 12.0;
-    public string FontColor { get; set; } = "#000000";
-    public bool FontBold { get; set; } = false;
-    public bool FontItalic { get; set; } = false;
-}
-
-public class ParagraphDto
-{
-    public string LineSpacingMode { get; set; } = "multiple";
-    public double LineSpacingValue { get; set; } = 1.5;
-    public string SpecialFormat { get; set; } = "首行";
-    public double IndentValue { get; set; } = 2.0;
-    public string IndentUnit { get; set; } = "ch";
-    public double FirstLineIndent { get; set; } = 7.4;
-    public string FirstLineIndentUnit { get; set; } = "mm";
-    public string Alignment { get; set; } = "justify";
-    public double SpaceBefore { get; set; } = 0.0;
-    public string SpaceBeforeUnit { get; set; } = "行";
-    public double SpaceAfter { get; set; } = 0.0;
-    public string SpaceAfterUnit { get; set; } = "行";
-}
-
-public class HeadingDto
-{
-    public int Level { get; set; } = 1;
-    public string FontCn { get; set; } = "黑体";
-    public string FontEn { get; set; } = "Times New Roman";
-    public double FontSize { get; set; } = 22.0;
-    public string FontColor { get; set; } = "#000000";
-    public bool FontBold { get; set; } = true;
-    public bool FontItalic { get; set; } = false;
-    public string Alignment { get; set; } = "left";
-    public string SpecialFormat { get; set; } = "首行";
-    public double IndentValue { get; set; } = 0.0;
-    public string IndentUnit { get; set; } = "ch";
-    public double SpaceBefore { get; set; } = 1.0;
-    public string SpaceBeforeUnit { get; set; } = "行";
-    public double SpaceAfter { get; set; } = 1.0;
-    public string SpaceAfterUnit { get; set; } = "行";
-    public string LineSpacingMode { get; set; } = "multiple";
-    public double LineSpacingValue { get; set; } = 1.5;
-    public double FirstLineIndent { get; set; } = 0.0;
-    public string FirstLineIndentUnit { get; set; } = "字符";
-}
-
-#endregion
-
-#region File DTOs
-
-public class FileSelectRequest
-{
-    public List<string> Paths { get; set; } = new();
-}
-
-public class FolderRequest
-{
-    public string Folder { get; set; } = "";
-}
-
-public class FileDeleteRequest
-{
-    public List<string> Paths { get; set; } = new();
-}
-
-public class FilesResponse
-{
-    public List<string> Files { get; set; } = new();
-    public int Count { get; set; }
-    public List<string> Added { get; set; } = new();
-}
-
-#endregion
-
-#region Format Task DTOs
-
-public class FormatStartRequest
-{
-    public List<string> Files { get; set; } = new();
-    public ProfileDto? Profile { get; set; }
-    public string OutputDir { get; set; } = "";
-}
-
-public class FormatStartResponse
-{
-    public string TaskId { get; set; } = "";
-}
-
-public class FormatProgressResponse
-{
-    public string TaskId { get; set; } = "";
-    public int Current { get; set; }
-    public int Total { get; set; }
-    public string Status { get; set; } = "idle";
-}
-
-public class FormatResultItem
-{
-    public string FilePath { get; set; } = "";
-    public bool Success { get; set; }
-    public string Message { get; set; } = "";
-}
-
-public class FormatResultResponse
-{
-    public string TaskId { get; set; } = "";
-    public List<FormatResultItem> Results { get; set; } = new();
-    public int OkCount { get; set; }
-    public int FailCount { get; set; }
-}
-
-#endregion
-
-#region Theme DTOs
-
-public class ThemeResponse
-{
-    public string Mode { get; set; } = "system";
-}
-
-public class ThemeRequest
-{
-    public string Mode { get; set; } = "system";
-}
-
-#endregion
-
-#region Common DTOs
-
-public class OkResponse
-{
-    public bool Ok { get; set; } = true;
-    public string Detail { get; set; } = "";
-}
-
-#endregion

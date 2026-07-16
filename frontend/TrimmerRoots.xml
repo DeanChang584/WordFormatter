@@ -1,0 +1,11 @@
+<linker>
+  <!-- Preserve ALL members of ALL types in the WordFormatterUI assembly
+       so that System.Text.Json reflection-based serialization works correctly
+       with all DTOs, ViewModels, Views, and Controls. -->
+  <assembly fullname="WordFormatterUI" preserve="all" />
+  <!-- Preserve all System.Text.Json types (reflection-based serialization) -->
+  <assembly fullname="System.Text.Json" preserve="all" />
+  <!-- Preserve WinRT/WinUI interop types -->
+  <assembly fullname="WinRT.Runtime" preserve="all" />
+  <assembly fullname="Microsoft.Windows.SDK.NET" preserve="all" />
+</linker>
