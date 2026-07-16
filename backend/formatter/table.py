@@ -101,41 +101,60 @@ def _rgb_from_hex(hex_color: str) -> Optional[RGBColor]:
 
 
 def apply_table_format(doc: "Document", config: DmTableConfig) -> None:
-    """对文档中所有表格应用格式化规则。"""
+    """对文档中所有表格（包括嵌套表格）应用格式化规则。"""
     for table in doc.tables:
-        _set_table_alignment(table, config)
-        _set_table_width(table, config)
-        _set_borders(table, config)
-        _set_cell_margins(table, config)
+        _apply_table_recursive(table, config)
 
-        for row_idx, row in enumerate(table.rows):
-            # 行高
-            _set_row_height(row, config, row_idx)
 
-            # 跨页断行（允许行跨页）
-            _set_row_allow_split(row, config)
+def _apply_table_recursive(table, config: DmTableConfig) -> None:
+    """对单个表格及其所有嵌套子表格递归应用格式化规则。"""
+    _set_table_alignment(table, config)
+    _set_table_width(table, config)
+    _set_borders(table, config)
+    _set_cell_margins(table, config)
 
+    for row_idx, row in enumerate(table.rows):
+        # 行高
+        _set_row_height(row, config, row_idx)
+
+        # 跨页断行（允许行跨页）
+        _set_row_allow_split(row, config)
+
+        for cell in row.cells:
+            # 表头格式
+            if row_idx == 0:
+                _set_header_format(cell, config)
+            else:
+                _set_body_format(cell, config)
+
+            # 单元格对齐
+            _set_cell_alignment(cell, config)
+
+            # 行距
+            _apply_cell_line_spacing(cell, config)
+
+            # 递归处理嵌套表格
+            for nested_table in _get_nested_tables(cell):
+                _apply_table_recursive(nested_table, config)
+
+        # 表头文字居中覆盖：头行水平对齐强制为居中
+        if row_idx == 0 and config.header_text_center:
             for cell in row.cells:
-                # 表头格式
-                if row_idx == 0:
-                    _set_header_format(cell, config)
-                else:
-                    _set_body_format(cell, config)
+                _override_header_cell_align_center(cell)
 
-                # 单元格对齐
-                _set_cell_alignment(cell, config)
+    # 表头跨页重复
+    if config.repeat_header:
+        _set_repeat_header(table)
 
-                # 行距
-                _apply_cell_line_spacing(cell, config)
 
-            # 表头文字居中覆盖：头行水平对齐强制为居中
-            if row_idx == 0 and config.header_text_center:
-                for cell in row.cells:
-                    _override_header_cell_align_center(cell)
-
-        # 表头跨页重复
-        if config.repeat_header:
-            _set_repeat_header(table)
+def _get_nested_tables(cell):
+    """返回单元格内所有直接嵌套的 Table 对象。"""
+    from docx.table import Table
+    nested = []
+    tc = cell._tc  # noqa: SLF001
+    for tbl_elem in tc.findall(qn("w:tbl")):
+        nested.append(Table(tbl_elem, None))
+    return nested
 
 
 # ============================================================
@@ -524,16 +543,10 @@ def _set_cell_alignment(cell, config: DmTableConfig):
             ppr = parse_xml(f'<w:pPr {nsdecls("w")}/>')
             para._p.insert(0, ppr)  # noqa: SLF001
 
-        for old in ppr.findall(qn("w:jc")):
-            ppr.remove(old)
-        jc = parse_xml(f'<w:jc {nsdecls("w")} w:val="{align_h}"/>')
-        ppr.append(jc)
-
-        # 特殊格式（缩进）
+        # 特殊格式（缩进）— 必须在 jc 之前（OOXML schema 顺序）
         for old in ppr.findall(qn("w:ind")):
             ppr.remove(old)
         ind_el = OxmlElement("w:ind")
-        ppr.append(ind_el)
 
         indent_type = config.indent_type
         if indent_type == "first_line":
@@ -552,6 +565,13 @@ def _set_cell_alignment(cell, config: DmTableConfig):
             ind_el.set(qn("w:hangingChars"), "0")
             ind_el.set(qn("w:left"), "0")
             ind_el.set(qn("w:right"), "0")
+        ppr.append(ind_el)
+
+        # 对齐方式
+        for old in ppr.findall(qn("w:jc")):
+            ppr.remove(old)
+        jc = parse_xml(f'<w:jc {nsdecls("w")} w:val="{align_h}"/>')
+        ppr.append(jc)
 
 
 def _apply_cell_line_spacing(cell, config: DmTableConfig):
