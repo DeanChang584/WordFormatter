@@ -158,8 +158,15 @@
                               HorizontalAlignment="Stretch"
                               SelectionChanged="TableLineSpacingModeBox_Changed" />
                     <controls:NumericTextBox Grid.Column="2" x:Name="TableLineSpacingBox" Width="80"
-                                              HorizontalAlignment="Stretch" Step="0.25" DecimalPlaces="1"
+                                              HorizontalAlignment="Stretch" Step="0.25" DecimalPlaces="2"
                                               ValueChanged="TableLineSpacingBox_ValueChanged" />
+                    <ComboBox Grid.Column="3" x:Name="TableLineSpacingUnitBox" Height="32" Width="80"
+                              HorizontalAlignment="Stretch" SelectedIndex="0"
+                              SelectionChanged="TableLineSpacingUnitBox_SelectionChanged">
+                        <ComboBoxItem>磅</ComboBoxItem>
+                        <ComboBoxItem>厘米</ComboBoxItem>
+                        <ComboBoxItem>毫米</ComboBoxItem>
+                    </ComboBox>
                 </Grid>
 
                 <!-- 特殊格式（缩进） -->
@@ -213,17 +220,30 @@
                               SelectionChanged="CellAlignVBox_SelectionChanged" />
                 </Grid>
 
-                <!-- 背景颜色 -->
+                <!-- 表头背景颜色 -->
                 <Grid Height="32" ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="72" />
                         <ColumnDefinition Width="120" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="背景颜色" />
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="表头背景" />
                     <ComboBox Grid.Column="1" x:Name="HeaderBgColorBox" Height="32"
                               HorizontalAlignment="Stretch"
                               SelectionChanged="HeaderBgColorBox_SelectionChanged" />
+                </Grid>
+
+                <!-- 正文背景颜色 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="正文背景" />
+                    <ComboBox Grid.Column="1" x:Name="BodyBgColorBox" Height="32"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="BodyBgColorBox_SelectionChanged" />
                 </Grid>
 
                 <!-- 边框样式 + 边框颜色 -->
@@ -261,7 +281,7 @@
                     </ComboBox>
                 </Grid>
 
-                <!-- 单元格边距 -->
+                <!-- 水平内边距 -->
                 <Grid Height="32" ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="72" />
@@ -269,11 +289,28 @@
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="单元格边距" />
-                    <controls:NumericTextBox Grid.Column="1" x:Name="CellMarginBox"
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="水平内边距" />
+                    <controls:NumericTextBox Grid.Column="1" x:Name="CellMarginHBox"
                                               HorizontalAlignment="Stretch"
-                                              ValueChanged="CellMarginBox_ValueChanged" />
-                    <ComboBox Grid.Column="2" x:Name="CellMarginUnitBox" Height="32" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="CellMarginUnitBox_SelectionChanged">
+                                              ValueChanged="CellMarginHBox_ValueChanged" />
+                    <ComboBox Grid.Column="2" x:Name="CellMarginHUnitBox" Height="32" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="CellMarginHUnitBox_SelectionChanged">
+                        <ComboBoxItem>厘米</ComboBoxItem>
+                        <ComboBoxItem>毫米</ComboBoxItem>
+                    </ComboBox>
+                </Grid>
+                <!-- 垂直内边距 -->
+                <Grid Height="32" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="垂直内边距" />
+                    <controls:NumericTextBox Grid.Column="1" x:Name="CellMarginVBox"
+                                              HorizontalAlignment="Stretch"
+                                              ValueChanged="CellMarginVBox_ValueChanged" />
+                    <ComboBox Grid.Column="2" x:Name="CellMarginVUnitBox" Height="32" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="CellMarginVUnitBox_SelectionChanged">
                         <ComboBoxItem>厘米</ComboBoxItem>
                         <ComboBoxItem>毫米</ComboBoxItem>
                     </ComboBox>

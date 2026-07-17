@@ -19,6 +19,7 @@ public class TableConfigDto
     public bool HeaderBold { get; set; } = true;
     public bool HeaderTextCenter { get; set; } = true;
     public string HeaderBgColor { get; set; } = "";
+    public string BodyBgColor { get; set; } = "";
 
     // ── 边框 ──
     public string BorderStyle { get; set; } = "all";
@@ -30,8 +31,10 @@ public class TableConfigDto
     public string CellAlignV { get; set; } = "middle";
 
     // ── 单元格边距 ──
-    public double CellMargin { get; set; } = 0.19;
-    public string CellMarginUnit { get; set; } = "cm";
+    public double CellMarginH { get; set; } = 0.19;
+    public string CellMarginHUnit { get; set; } = "cm";
+    public double CellMarginV { get; set; } = 0.0;
+    public string CellMarginVUnit { get; set; } = "cm";
 
     // ── 特殊格式（缩进） ──
     public string IndentType { get; set; } = "none";
@@ -46,6 +49,7 @@ public class TableConfigDto
     // ── 行距 ──
     public double LineSpacing { get; set; } = 1.5;
     public string LineSpacingMode { get; set; } = "multiple";
+    public string LineSpacingUnit { get; set; } = "pt";
 
     // ── 行高 ──
     public string RowHeightMode { get; set; } = "auto";

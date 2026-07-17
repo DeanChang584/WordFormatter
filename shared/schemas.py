@@ -257,6 +257,7 @@ class TableConfig(_Base):
     header_bold: bool = True
     header_text_center: bool = True
     header_bg_color: str = "none"          # "none" or hex color e.g. "#D9E2F3"
+    body_bg_color: str = "none"            # "none" or hex color e.g. "#FFFFFF"
 
     # Border
     border_style: str = "all"              # none / all / horizontal / grid
@@ -266,8 +267,10 @@ class TableConfig(_Base):
     # Cell alignment
     cell_align_h: str = "left"             # left / center / right
     cell_align_v: str = "center"           # top / middle / bottom
-    cell_margin: float = 0.19
-    cell_margin_unit: str = "cm"
+    cell_margin_h: float = 0.19
+    cell_margin_h_unit: str = "cm"
+    cell_margin_v: float = 0.0
+    cell_margin_v_unit: str = "cm"
 
     # Indent (special format)
     indent_type: str = "none"           # firstLine / none / hanging
@@ -287,6 +290,7 @@ class TableConfig(_Base):
     # Line spacing
     line_spacing: float = 1.5
     line_spacing_mode: str = "multiple"
+    line_spacing_unit: str = Field(default="pt", alias="lineSpacingUnit")
 
     # Pagination
     auto_split: bool = True

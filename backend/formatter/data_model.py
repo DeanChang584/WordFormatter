@@ -160,6 +160,7 @@ class TableConfig:
     header_bold: bool = True
     header_text_center: bool = True
     header_bg_color: str = "none"
+    body_bg_color: str = "none"
 
     # Border
     border_style: str = "all"              # none / all / horizontal / grid
@@ -169,8 +170,10 @@ class TableConfig:
     # Cell alignment
     cell_align_h: str = "left"             # left / center / right
     cell_align_v: str = "center"           # top / middle / bottom
-    cell_margin: float = 0.15
-    cell_margin_unit: str = "cm"
+    cell_margin_h: float = 0.19
+    cell_margin_h_unit: str = "cm"
+    cell_margin_v: float = 0.0
+    cell_margin_v_unit: str = "cm"
 
     # Special indent
     indent_type: str = "none"              # firstLine / none / hanging
@@ -190,6 +193,7 @@ class TableConfig:
     # Line spacing
     line_spacing: float = 1.5
     line_spacing_mode: str = "multiple"
+    line_spacing_unit: str = "pt"
 
     # Pagination
     auto_split: bool = True

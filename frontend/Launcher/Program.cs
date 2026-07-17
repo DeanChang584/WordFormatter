@@ -17,7 +17,7 @@ void Log(string msg) {
     try { File.AppendAllText(logPath, line + "\n"); } catch { }
 }
 
-Log($"Starting Word Formatter v2.0 from {appDir}");
+Log($"Starting Word Formatter v2.0.1 from {appDir}");
 
 // 1. Kill any leftover backend
 foreach (var proc in Process.GetProcessesByName("backend"))

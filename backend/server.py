@@ -6,6 +6,7 @@ API routers from the ``backend.api`` package. Run with:
     python -m uvicorn backend.server:app --port 8765
 """
 
+import os
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -83,6 +84,25 @@ app.include_router(templates.router, prefix="/api", tags=["templates"])
 app.include_router(format_api.router, prefix="/api", tags=["format"])
 app.include_router(history.router, prefix="/api", tags=["history"])
 app.include_router(preview.router, prefix="/api", tags=["preview"])
+
+
+# ============================================================
+# Shutdown endpoint — called by the frontend on window close
+# ============================================================
+
+
+@app.post("/api/shutdown")
+async def shutdown():
+    logger.info("Shutdown requested via /api/shutdown")
+    # Schedule exit after returning the response
+    import asyncio
+
+    async def _delayed_exit():
+        await asyncio.sleep(0.1)
+        os._exit(0)
+
+    asyncio.create_task(_delayed_exit())
+    return {"success": True, "message": "Shutting down"}
 
 logger.info("FastAPI initialized")
 

@@ -286,6 +286,27 @@ public sealed class ApiService
     }
 
     // ═══════════════════════════════════════════════════════════
+    //  Shutdown — notify backend to exit gracefully
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>POST /api/shutdown — ask the backend to exit.</summary>
+    public async Task ShutdownBackendAsync()
+    {
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+            var resp = await _http.PostAsync("/api/shutdown", null, cts.Token);
+            if (resp.IsSuccessStatusCode)
+                System.Diagnostics.Debug.WriteLine("Shutdown request sent to backend");
+        }
+        catch (Exception ex)
+        {
+            // The backend may close before responding — that's okay.
+            System.Diagnostics.Debug.WriteLine($"Shutdown exception (ignored): {ex.Message}");
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
     //  Settings — TODO: add when backend /api/settings is created
     // ═══════════════════════════════════════════════════════════
 }

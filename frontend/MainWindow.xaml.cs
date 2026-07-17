@@ -104,6 +104,17 @@ public sealed partial class MainWindow : Window
         //  before this event handler was registered, so the event was missed.)
         ViewModel.RefreshAllViews();
 
+        // Register window close → clean shutdown of backend + tray icon
+        Closed += async (_, _) =>
+        {
+            // Remove tray icon first
+            App.TrayIcon?.Dispose();
+            // Notify backend to exit
+            await App.Api.ShutdownBackendAsync();
+            // Fully exit the process
+            Environment.Exit(0);
+        };
+
         // Title bar + keyboard + delayed TableSettingsView creation
         ((FrameworkElement)Content).Loaded += (_, _) =>
         {
@@ -377,6 +388,14 @@ public sealed partial class MainWindow : Window
 
     private void FileCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
     {
+        // x:Bind TwoWay 绑定推送值到源属性 (IsSelected) 的时机晚于
+        // Checked/Unchecked 事件，导致 UpdateSelectionState 计数时
+        // IsSelected 尚未更新，始终少算 1。
+        // 此处直接从 CheckBox 的 IsChecked 属性读取当前状态并手动同步。
+        if (sender is CheckBox checkBox && checkBox.DataContext is FileItemDto fileItem)
+        {
+            fileItem.IsSelected = checkBox.IsChecked == true;
+        }
         UpdateSelectionState();
     }
 
@@ -384,6 +403,9 @@ public sealed partial class MainWindow : Window
     {
         foreach (var file in FilesVm.Files)
             file.IsSelected = true;
+        // 强制 ListView 重新绑定以刷新 UI 上的 CheckBox 状态
+        FileListView.ItemsSource = null;
+        FileListView.ItemsSource = FilesVm.Files;
         UpdateSelectionState();
     }
 
@@ -391,6 +413,9 @@ public sealed partial class MainWindow : Window
     {
         foreach (var file in FilesVm.Files)
             file.IsSelected = !file.IsSelected;
+        // 强制 ListView 重新绑定以刷新 UI 上的 CheckBox 状态
+        FileListView.ItemsSource = null;
+        FileListView.ItemsSource = FilesVm.Files;
         UpdateSelectionState();
     }
 

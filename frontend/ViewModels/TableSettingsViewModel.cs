@@ -23,6 +23,7 @@ public partial class TableSettingsViewModel : ObservableObject
     [ObservableProperty] private bool _headerBold = true;
     [ObservableProperty] private bool _headerTextCenter = true;
     [ObservableProperty] private string _headerBgColor = "";
+    [ObservableProperty] private string _bodyBgColor = "";
 
     // ── 边框 ──
     [ObservableProperty] private string _borderStyle = "all";
@@ -34,8 +35,10 @@ public partial class TableSettingsViewModel : ObservableObject
     [ObservableProperty] private string _cellAlignV = "middle";
 
     // ── 单元格边距 ──
-    [ObservableProperty] private double _cellMargin = 0.19;
-    [ObservableProperty] private string _cellMarginUnit = "cm";
+    [ObservableProperty] private double _cellMarginH = 0.19;
+    [ObservableProperty] private string _cellMarginHUnit = "cm";
+    [ObservableProperty] private double _cellMarginV = 0.0;
+    [ObservableProperty] private string _cellMarginVUnit = "cm";
 
     // ── 特殊格式（缩进） ──
     [ObservableProperty] private string _indentType = "none";
@@ -50,6 +53,7 @@ public partial class TableSettingsViewModel : ObservableObject
     // ── 行距 ──
     [ObservableProperty] private double _tableLineSpacing = 1.5;
     [ObservableProperty] private string _tableLineSpacingMode = "multiple";
+    [ObservableProperty] private string _tableLineSpacingUnit = "pt";
 
     // ── 行高 ──
     [ObservableProperty] private string _rowHeightMode = "auto";
@@ -76,6 +80,16 @@ public partial class TableSettingsViewModel : ObservableObject
     public static List<string> BorderColorDisplayNames => new()
     {
         "黑色", "深红", "红色", "橙色", "黄色",
+        "浅绿", "绿色", "青色", "蓝色", "深蓝", "紫色"
+    };
+    public static List<string> BodyBgColorOptions => new()
+    {
+        "", "#000000", "#C00000", "#FF0000", "#FFC000", "#FFFF00",
+        "#92D050", "#00B050", "#00B0F0", "#0070C0", "#002060", "#7030A0"
+    };
+    public static List<string> BodyBgColorDisplayNames => new()
+    {
+        "无", "黑色", "深红", "红色", "橙色", "黄色",
         "浅绿", "绿色", "青色", "蓝色", "深蓝", "紫色"
     };
     public static List<string> HeaderBgColorOptions => new()
@@ -127,6 +141,7 @@ public partial class TableSettingsViewModel : ObservableObject
         HeaderBold = t.HeaderBold;
         HeaderTextCenter = t.HeaderTextCenter;
         HeaderBgColor = t.HeaderBgColor;
+        BodyBgColor = t.BodyBgColor;
 
         BorderStyle = t.BorderStyle;
         BorderColor = t.BorderColor;
@@ -135,8 +150,10 @@ public partial class TableSettingsViewModel : ObservableObject
         CellAlignH = t.CellAlignH;
         CellAlignV = t.CellAlignV;
 
-        CellMargin = t.CellMargin;
-        CellMarginUnit = t.CellMarginUnit;
+        CellMarginH = t.CellMarginH;
+        CellMarginHUnit = t.CellMarginHUnit;
+        CellMarginV = t.CellMarginV;
+        CellMarginVUnit = t.CellMarginVUnit;
 
         IndentType = t.IndentType;
         IndentValue = t.IndentValue;
@@ -148,6 +165,7 @@ public partial class TableSettingsViewModel : ObservableObject
 
         TableLineSpacing = t.LineSpacing;
         TableLineSpacingMode = t.LineSpacingMode;
+        TableLineSpacingUnit = t.LineSpacingUnit;
 
         RowHeightMode = t.RowHeightMode;
         RowHeight = t.RowHeight;
@@ -176,6 +194,7 @@ public partial class TableSettingsViewModel : ObservableObject
         t.HeaderBold = HeaderBold;
         t.HeaderTextCenter = HeaderTextCenter;
         t.HeaderBgColor = HeaderBgColor;
+        t.BodyBgColor = BodyBgColor;
 
         t.BorderStyle = BorderStyle;
         t.BorderColor = BorderColor;
@@ -184,8 +203,10 @@ public partial class TableSettingsViewModel : ObservableObject
         t.CellAlignH = CellAlignH;
         t.CellAlignV = CellAlignV;
 
-        t.CellMargin = CellMargin;
-        t.CellMarginUnit = CellMarginUnit;
+        t.CellMarginH = CellMarginH;
+        t.CellMarginHUnit = CellMarginHUnit;
+        t.CellMarginV = CellMarginV;
+        t.CellMarginVUnit = CellMarginVUnit;
 
         t.IndentType = IndentType;
         t.IndentValue = IndentValue;
@@ -197,6 +218,7 @@ public partial class TableSettingsViewModel : ObservableObject
 
         t.LineSpacing = TableLineSpacing;
         t.LineSpacingMode = TableLineSpacingMode;
+        t.LineSpacingUnit = TableLineSpacingUnit;
 
         t.RowHeightMode = RowHeightMode;
         t.RowHeight = RowHeight;
@@ -219,13 +241,16 @@ public partial class TableSettingsViewModel : ObservableObject
     partial void OnHeaderBoldChanged(bool value)        { IsDirty = true; WriteToSharedProfile(); }
     partial void OnHeaderTextCenterChanged(bool value)   { IsDirty = true; WriteToSharedProfile(); }
     partial void OnHeaderBgColorChanged(string value)   { IsDirty = true; WriteToSharedProfile(); }
+    partial void OnBodyBgColorChanged(string value)     { IsDirty = true; WriteToSharedProfile(); }
     partial void OnBorderStyleChanged(string value)     { IsDirty = true; WriteToSharedProfile(); }
     partial void OnBorderColorChanged(string value)     { IsDirty = true; WriteToSharedProfile(); }
     partial void OnBorderWidthChanged(double value)     { IsDirty = true; WriteToSharedProfile(); }
     partial void OnCellAlignHChanged(string value)      { IsDirty = true; WriteToSharedProfile(); }
     partial void OnCellAlignVChanged(string value)      { IsDirty = true; WriteToSharedProfile(); }
-    partial void OnCellMarginChanged(double value)      { IsDirty = true; WriteToSharedProfile(); }
-    partial void OnCellMarginUnitChanged(string value)  { IsDirty = true; WriteToSharedProfile(); }
+    partial void OnCellMarginHChanged(double value)     { IsDirty = true; WriteToSharedProfile(); }
+    partial void OnCellMarginHUnitChanged(string value) { IsDirty = true; WriteToSharedProfile(); }
+    partial void OnCellMarginVChanged(double value)     { IsDirty = true; WriteToSharedProfile(); }
+    partial void OnCellMarginVUnitChanged(string value) { IsDirty = true; WriteToSharedProfile(); }
     partial void OnIndentTypeChanged(string value)      { IsDirty = true; WriteToSharedProfile(); }
     partial void OnIndentValueChanged(double value)     { IsDirty = true; WriteToSharedProfile(); }
     partial void OnIndentUnitChanged(string value)      { IsDirty = true; WriteToSharedProfile(); }
@@ -240,6 +265,7 @@ public partial class TableSettingsViewModel : ObservableObject
     partial void OnFontUnderlineChanged(bool value)     { IsDirty = true; WriteToSharedProfile(); }
     partial void OnTableLineSpacingChanged(double value) { IsDirty = true; WriteToSharedProfile(); }
     partial void OnTableLineSpacingModeChanged(string value) { IsDirty = true; WriteToSharedProfile(); }
+    partial void OnTableLineSpacingUnitChanged(string value) { IsDirty = true; WriteToSharedProfile(); }
     partial void OnRowHeightModeChanged(string value)
     {
         IsDirty = true;
@@ -274,6 +300,7 @@ public partial class TableSettingsViewModel : ObservableObject
         HeaderBold = true;
         HeaderTextCenter = true;
         HeaderBgColor = "";
+        BodyBgColor = "";
 
         BorderStyle = "all";
         BorderColor = "#000000";
@@ -282,8 +309,10 @@ public partial class TableSettingsViewModel : ObservableObject
         CellAlignH = "left";
         CellAlignV = "middle";
 
-        CellMargin = 0.19;
-        CellMarginUnit = "cm";
+        CellMarginH = 0.19;
+        CellMarginHUnit = "cm";
+        CellMarginV = 0.0;
+        CellMarginVUnit = "cm";
 
         IndentType = "none";
         IndentValue = 0.0;

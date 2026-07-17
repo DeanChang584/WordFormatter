@@ -16,7 +16,8 @@ public sealed partial class TableSettingsView : UserControl
     private TableSettingsViewModel? _vm;
     private ProfileConfigDto? _sharedProfile;
     private double _rowHeightMm = 8.0;   // canonical value in mm (0.8 cm → 8 mm)
-    private double _cellMarginMm = 1.9;  // canonical value in mm (0.19 cm → 1.9 mm)
+    private double _cellMarginHMm = 1.9;  // canonical value in mm (0.19 cm → 1.9 mm)
+    private double _cellMarginVMm = 0.0;
     private bool _isUnitSwitching;
     private bool _isLoadingFields;
     private bool _isUpdatingModeFromValue;
@@ -172,6 +173,13 @@ public sealed partial class TableSettingsView : UserControl
             TableSettingsViewModel.HeaderBgColorDisplayNames,
             vm.HeaderBgColor);
 
+        // Body background color ComboBox
+        PopulateComboBoxWithDisplayNames(
+            BodyBgColorBox,
+            TableSettingsViewModel.BodyBgColorOptions,
+            TableSettingsViewModel.BodyBgColorDisplayNames,
+            vm.BodyBgColor);
+
         PopulateComboBoxWithDisplayNames(
             BorderStyleBox,
             TableSettingsViewModel.BorderStyleOptions,
@@ -246,12 +254,25 @@ public sealed partial class TableSettingsView : UserControl
         else
             TableLineSpacingModeBox.SelectedIndex = 3; // 多倍行距（其他值）
 
+        // Initialize line spacing unit ComboBox
+        TableLineSpacingUnitBox.SelectedIndex = vm.TableLineSpacingUnit switch
+        {
+            "cm" => 1,
+            "mm" => 2,
+            _ => 0, // pt
+        };
+        UpdateLineSpacingUnitVisibility();
+        ApplyLineSpacingConfig();
+        // 在初始化完成后重新同步值框，确保 UI 与 VM 一致
+        TableLineSpacingBox.Value = vm.TableLineSpacing;
+
         AutoSplitCheck.IsChecked = vm.AutoSplit;
         RepeatHeaderCheck.IsChecked = vm.RepeatHeader;
 
         // Apply distance configs for RowHeightBox and CellMarginBox
         ApplyConfigForDistance(RowHeightBox, RowHeightUnitBox);
-        ApplyCellMarginConfig();
+        ApplyCellMarginConfig(CellMarginHBox, CellMarginHUnitBox);
+        ApplyCellMarginConfig(CellMarginVBox, CellMarginVUnitBox);
 
         // Initialize NumericTextBox values from ViewModel
         BorderWidthBox.Value = vm.BorderWidth;
@@ -259,8 +280,10 @@ public sealed partial class TableSettingsView : UserControl
         var rowHeightUnitLabel = GetUnitLabel(RowHeightUnitBox);
         RowHeightBox.Value = rowHeightUnitLabel == "厘米" ? _rowHeightMm / 10.0 : _rowHeightMm;
 
-        var cellMarginUnitLabel = GetUnitLabel(CellMarginUnitBox);
-        CellMarginBox.Value = cellMarginUnitLabel == "厘米" ? _cellMarginMm / 10.0 : _cellMarginMm;
+        var cellMarginHUnitLabel = GetUnitLabel(CellMarginHUnitBox);
+        CellMarginHBox.Value = cellMarginHUnitLabel == "厘米" ? _cellMarginHMm / 10.0 : _cellMarginHMm;
+        var cellMarginVUnitLabel = GetUnitLabel(CellMarginVUnitBox);
+        CellMarginVBox.Value = cellMarginVUnitLabel == "厘米" ? _cellMarginVMm / 10.0 : _cellMarginVMm;
 
         _isLoadingFields = false;
     }
@@ -401,6 +424,12 @@ public sealed partial class TableSettingsView : UserControl
             GetVm().HeaderBgColor = (string)item.Tag;
     }
 
+    private void BodyBgColorBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (BodyBgColorBox.SelectedItem is ComboBoxItem item)
+            GetVm().BodyBgColor = (string)item.Tag;
+    }
+
     private void BorderStyleBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (BorderStyleBox.SelectedItem is ComboBoxItem item)
@@ -430,12 +459,20 @@ public sealed partial class TableSettingsView : UserControl
             GetVm().CellAlignV = (string)item.Tag;
     }
 
-    private void CellMarginBox_ValueChanged(object sender, double value)
+    private void CellMarginHBox_ValueChanged(object sender, double value)
     {
         if (_isUnitSwitching) return;
-        var unitLabel = GetUnitLabel(CellMarginUnitBox);
-        _cellMarginMm = unitLabel == "厘米" ? value * 10.0 : value;
-        GetVm().CellMargin = _cellMarginMm / 10.0; // ViewModel stores in cm
+        var unitLabel = GetUnitLabel(CellMarginHUnitBox);
+        _cellMarginHMm = unitLabel == "厘米" ? value * 10.0 : value;
+        GetVm().CellMarginH = _cellMarginHMm / 10.0; // ViewModel stores in cm
+    }
+
+    private void CellMarginVBox_ValueChanged(object sender, double value)
+    {
+        if (_isUnitSwitching) return;
+        var unitLabel = GetUnitLabel(CellMarginVUnitBox);
+        _cellMarginVMm = unitLabel == "厘米" ? value * 10.0 : value;
+        GetVm().CellMarginV = _cellMarginVMm / 10.0; // ViewModel stores in cm
     }
 
     private void RowHeightModeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -459,16 +496,30 @@ public sealed partial class TableSettingsView : UserControl
         _isUnitSwitching = false;
     }
 
-    private void CellMarginUnitBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void CellMarginHUnitBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_isUnitSwitching) return;
         _isUnitSwitching = true;
 
-        var unitLabel = GetUnitLabel(CellMarginUnitBox);
-        ApplyCellMarginConfig();
+        var unitLabel = GetUnitLabel(CellMarginHUnitBox);
+        ApplyCellMarginConfig(CellMarginHBox, CellMarginHUnitBox);
 
         // Convert stored mm value to the new unit
-        CellMarginBox.Value = unitLabel == "厘米" ? _cellMarginMm / 10.0 : _cellMarginMm;
+        CellMarginHBox.Value = unitLabel == "厘米" ? _cellMarginHMm / 10.0 : _cellMarginHMm;
+
+        _isUnitSwitching = false;
+    }
+
+    private void CellMarginVUnitBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_isUnitSwitching) return;
+        _isUnitSwitching = true;
+
+        var unitLabel = GetUnitLabel(CellMarginVUnitBox);
+        ApplyCellMarginConfig(CellMarginVBox, CellMarginVUnitBox);
+
+        // Convert stored mm value to the new unit
+        CellMarginVBox.Value = unitLabel == "厘米" ? _cellMarginVMm / 10.0 : _cellMarginVMm;
 
         _isUnitSwitching = false;
     }
@@ -505,9 +556,9 @@ public sealed partial class TableSettingsView : UserControl
     /// Apply CellMargin-specific config: step is always 0.1 mm
     /// (0.01 cm), and decimal places adapt to the current unit.
     /// </summary>
-    private void ApplyCellMarginConfig()
+    private void ApplyCellMarginConfig(Controls.NumericTextBox nb, ComboBox unitCombo)
     {
-        var unitLabel = GetUnitLabel(CellMarginUnitBox);
+        var unitLabel = GetUnitLabel(unitCombo);
         var config = NumericUnitConfigProvider.GetConfig(unitLabel);
         if (unitLabel == "毫米")
         {
@@ -517,7 +568,7 @@ public sealed partial class TableSettingsView : UserControl
         {
             config = config with { Step = 0.01, DecimalPlaces = 2 };
         }
-        CellMarginBox.ApplyConfig(config);
+        nb.ApplyConfig(config);
     }
 
     private void IndentTypeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -585,11 +636,15 @@ public sealed partial class TableSettingsView : UserControl
             1 => ("multiple", 1.5),
             2 => ("multiple", 2.0),
             3 => ("multiple", vm.TableLineSpacing),
-            4 => ("fixed", 1.5),
-            _ => ("at_least", 1.5),
+            4 => ("fixed", 6.0),
+            _ => ("at_least", 6.0),
         };
         vm.TableLineSpacingMode = mode;
         vm.TableLineSpacing = val;
+        TableLineSpacingBox.Value = val;
+
+        UpdateLineSpacingUnitVisibility();
+        ApplyLineSpacingConfig();
     }
 
     private void TableLineSpacingBox_ValueChanged(object sender, double value)
@@ -618,6 +673,54 @@ public sealed partial class TableSettingsView : UserControl
                 _isUpdatingModeFromValue = false;
             }
         }
+    }
+
+    private void TableLineSpacingUnitBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var vm = GetVm();
+        if (vm == null) return;
+
+        var newUnit = TableLineSpacingUnitBox.SelectedIndex switch
+        {
+            1 => "cm",
+            2 => "mm",
+            _ => "pt",
+        };
+
+        // 先做数值换算（old → new），再更新 unit
+        var oldUnit = vm.TableLineSpacingUnit;
+        if (!string.IsNullOrEmpty(oldUnit) && oldUnit != newUnit
+            && NumericUnitConfigProvider.IsLengthUnit(oldUnit)
+            && NumericUnitConfigProvider.IsLengthUnit(newUnit))
+        {
+            var converted = NumericUnitConfigProvider.ConvertLength(
+                TableLineSpacingBox.Value, oldUnit, newUnit);
+            TableLineSpacingBox.Value = Math.Round(converted, 1);
+        }
+
+        vm.TableLineSpacingUnit = newUnit;
+        ApplyLineSpacingConfig();
+        UpdateLineSpacingUnitVisibility();
+    }
+
+    private void UpdateLineSpacingUnitVisibility()
+    {
+        // 单位下拉框仅在 fixed/at_least 模式下可见
+        var isDistanceMode = TableLineSpacingModeBox.SelectedItem is ComboBoxItem item &&
+                             ((string)item.Tag == "fixed" || (string)item.Tag == "at_least");
+        TableLineSpacingUnitBox.Visibility = isDistanceMode ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void ApplyLineSpacingConfig()
+    {
+        var vm = GetVm();
+        if (vm == null) return;
+
+        // 参照正文样式 BodyStyleView.ApplyConfigForLineSpacing() 的实现方式，
+        // 使用 NumericUnitConfigProvider 中央配置中心获取步进值
+        var isDistanceMode = vm.TableLineSpacingMode == "fixed" || vm.TableLineSpacingMode == "at_least";
+        var unit = isDistanceMode ? vm.TableLineSpacingUnit : "行";
+        TableLineSpacingBox.ApplyConfig(NumericUnitConfigProvider.GetConfig(unit));
     }
 
     private void AutoSplitCheck_Changed(object sender, RoutedEventArgs e)

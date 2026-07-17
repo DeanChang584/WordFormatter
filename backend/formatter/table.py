@@ -300,78 +300,174 @@ def _set_row_allow_split(row, config: DmTableConfig):
 
 
 def _set_borders(table, config: DmTableConfig):
-    """设置表格边框。"""
+    """设置表格边框 — 使用单元格级边框（w:tcBorders）确保兼容性。
+
+    在 OOXML 中，单元格级边框（w:tcBorders）优先级高于表格级边框（w:tblBorders），
+    且某些 Word/WPS 版本对表格级边框的渲染存在兼容性问题。
+    因此采用单元格级边框方案，为每个单元格的四个边设置显式边框。
+
+    同时删除表格样式引用 (w:tblStyle)，防止样式定义的边框干扰。
+    """
     tbl = table._tbl  # noqa: SLF001
     tbl_pr = tbl.tblPr
 
-    # 删除旧边框
+    # 删除旧表格级边框
     for old in tbl_pr.findall(qn("w:tblBorders")):
+        tbl_pr.remove(old)
+
+    # 删除所有表格属性级格式覆盖（样式引用、外观设定、主题等）
+    for old in tbl_pr.findall(qn("w:tblStyle")):
+        tbl_pr.remove(old)
+    for old in tbl_pr.findall(qn("w:tblLook")):
+        tbl_pr.remove(old)
+    for old in tbl_pr.findall(qn("w:tblStyleRowBandSize")):
+        tbl_pr.remove(old)
+    for old in tbl_pr.findall(qn("w:tblStyleColBandSize")):
         tbl_pr.remove(old)
 
     style = config.border_style
     if style == "none":
-        return  # 无边框
+        # 无边框：清除所有单元格级边框
+        _clear_cell_borders(table)
+        return
 
+    # 构建边框属性
     color = config.border_color.replace("#", "")
-    width_val = str(int(config.border_width * 8))  # eighths of a point
+    # w:sz 以 1/8 磅为单位。例如 0.5pt → 4，1pt → 8，2pt → 16
+    width_eighths = int(round(config.border_width * 8))
+    width_val = str(max(width_eighths, 2))  # 最小 2 (0.25pt)，过细可能不可见
+
+    # 为每个单元格设置边框
+    for row in table.rows:
+        for cell in row.cells:
+            _set_cell_borders(cell, style, color, width_val)
+
+
+def _set_cell_borders(cell, style: str, color: str, width_val: str):
+    """为单个单元格设置边框（w:tcBorders）。"""
+    tc = cell._tc  # noqa: SLF001
+    tc_pr = tc.find(qn("w:tcPr"))
+    if tc_pr is None:
+        tc_pr = parse_xml(f'<w:tcPr {nsdecls("w")}/>')
+        tc.insert(0, tc_pr)
+
+    # 删除旧单元格级边框
+    for old in tc_pr.findall(qn("w:tcBorders")):
+        tc_pr.remove(old)
 
     if style == "all":
-        borders_xml = f"""<w:tblBorders {nsdecls("w")}>
-            <w:top w:val="single" w:sz="{width_val}" w:color="{color}"/>
-            <w:left w:val="single" w:sz="{width_val}" w:color="{color}"/>
-            <w:bottom w:val="single" w:sz="{width_val}" w:color="{color}"/>
-            <w:right w:val="single" w:sz="{width_val}" w:color="{color}"/>
-            <w:insideH w:val="single" w:sz="{width_val}" w:color="{color}"/>
-            <w:insideV w:val="single" w:sz="{width_val}" w:color="{color}"/>
-        </w:tblBorders>"""
+        # 全部框线 — 上下左右四条边
+        borders_xml = f"""<w:tcBorders {nsdecls("w")}>
+            <w:top w:val="single" w:sz="{width_val}" w:color="{color}" w:space="0"/>
+            <w:left w:val="single" w:sz="{width_val}" w:color="{color}" w:space="0"/>
+            <w:bottom w:val="single" w:sz="{width_val}" w:color="{color}" w:space="0"/>
+            <w:right w:val="single" w:sz="{width_val}" w:color="{color}" w:space="0"/>
+        </w:tcBorders>"""
     elif style == "horizontal":
-        borders_xml = f"""<w:tblBorders {nsdecls("w")}>
-            <w:top w:val="single" w:sz="{width_val}" w:color="{color}"/>
-            <w:bottom w:val="single" w:sz="{width_val}" w:color="{color}"/>
-            <w:insideH w:val="single" w:sz="{width_val}" w:color="{color}"/>
-        </w:tblBorders>"""
+        # 仅横向框线 — 上下两条边，左右显式设为无（防止默认样式继承导致出现竖向框线）
+        borders_xml = f"""<w:tcBorders {nsdecls("w")}>
+            <w:top w:val="single" w:sz="{width_val}" w:color="{color}" w:space="0"/>
+            <w:left w:val="none" w:space="0"/>
+            <w:bottom w:val="single" w:sz="{width_val}" w:color="{color}" w:space="0"/>
+            <w:right w:val="none" w:space="0"/>
+        </w:tcBorders>"""
     elif style == "grid":
-        # grid = all 边框（外框 + 内部网格）
-        borders_xml = f"""<w:tblBorders {nsdecls("w")}>
-            <w:top w:val="single" w:sz="{width_val}" w:color="{color}"/>
-            <w:left w:val="single" w:sz="{width_val}" w:color="{color}"/>
-            <w:bottom w:val="single" w:sz="{width_val}" w:color="{color}"/>
-            <w:right w:val="single" w:sz="{width_val}" w:color="{color}"/>
-            <w:insideH w:val="single" w:sz="{width_val}" w:color="{color}"/>
-            <w:insideV w:val="single" w:sz="{width_val}" w:color="{color}"/>
-        </w:tblBorders>"""
+        # 网格线 — 上下左右四条边
+        borders_xml = f"""<w:tcBorders {nsdecls("w")}>
+            <w:top w:val="single" w:sz="{width_val}" w:color="{color}" w:space="0"/>
+            <w:left w:val="single" w:sz="{width_val}" w:color="{color}" w:space="0"/>
+            <w:bottom w:val="single" w:sz="{width_val}" w:color="{color}" w:space="0"/>
+            <w:right w:val="single" w:sz="{width_val}" w:color="{color}" w:space="0"/>
+        </w:tcBorders>"""
     else:
         return
 
     borders_el = parse_xml(borders_xml)
-    tbl_pr.append(borders_el)
+    tc_pr.append(borders_el)
+
+
+def _clear_cell_borders(table):
+    """清除所有单元格级别的边框（w:tcBorders），但保留底纹。
+    
+    ！！注意！！此函数只清除边框不清除底纹，确保背景色设置不受影响。
+    """
+    for row in table.rows:
+        for cell in row.cells:
+            tc = cell._tc  # noqa: SLF001
+            tc_pr = tc.find(qn("w:tcPr"))
+            if tc_pr is not None:
+                for old in tc_pr.findall(qn("w:tcBorders")):
+                    tc_pr.remove(old)
+
+
+def _insert_in_order(parent, el, successor_tags):
+    """按 OOXML schema 顺序插入子元素：插在第一个存在的后继元素之前，否则追加到末尾。"""
+    for tag in successor_tags:
+        anchor = parent.find(qn(tag))
+        if anchor is not None:
+            anchor.addprevious(el)
+            return
+    parent.append(el)
 
 
 def _set_cell_margins(table, config: DmTableConfig):
-    """设置单元格边距。"""
+    """设置单元格边距。
+
+    水平边距（left/right）由 cell_margin_h 控制，
+    垂直边距（top/bottom）由 cell_margin_v 控制。
+
+    同时写入两个级别：
+      1. 表格级 w:tblCellMar（按 schema 顺序插入 tblPr，作为默认值）
+      2. 单元格级 w:tcPr/w:tcMar（优先级最高，覆盖表格样式继承的边距）
+    """
+    # Convert horizontal margin to twips
+    if config.cell_margin_h_unit == "mm" or config.cell_margin_h_unit == "毫米":
+        margin_h_val = str(int(config.cell_margin_h * 56.7))  # mm → twips
+    else:
+        margin_h_val = str(int(config.cell_margin_h * 567))   # cm → twips
+
+    # Convert vertical margin to twips
+    if config.cell_margin_v_unit == "mm" or config.cell_margin_v_unit == "毫米":
+        margin_v_val = str(int(config.cell_margin_v * 56.7))  # mm → twips
+    else:
+        margin_v_val = str(int(config.cell_margin_v * 567))   # cm → twips
+
+    def _margins_xml(root_tag: str) -> str:
+        return f"""<w:{root_tag} {nsdecls("w")}>
+        <w:top w:w="{margin_v_val}" w:type="dxa"/>
+        <w:left w:w="{margin_h_val}" w:type="dxa"/>
+        <w:bottom w:w="{margin_v_val}" w:type="dxa"/>
+        <w:right w:w="{margin_h_val}" w:type="dxa"/>
+    </w:{root_tag}>"""
+
+    # 1. 表格级默认边距 — 必须插在 w:tblLook 之前（schema 顺序），否则 Word 忽略
     tbl = table._tbl  # noqa: SLF001
     tbl_pr = tbl.tblPr
 
-    # 删除旧边距
     for old in tbl_pr.findall(qn("w:tblCellMar")):
         tbl_pr.remove(old)
 
-    # Convert cell margin to twips based on unit
-    if config.cell_margin_unit == "mm" or config.cell_margin_unit == "毫米":
-        margin_val = str(int(config.cell_margin * 56.7))  # mm → twips
-    else:
-        margin_val = str(int(config.cell_margin * 567))   # cm → twips
-    unit = "dxa"
+    margins_el = parse_xml(_margins_xml("tblCellMar"))
+    _insert_in_order(tbl_pr, margins_el,
+                     ("w:tblLook", "w:tblCaption", "w:tblDescription"))
 
-    margins_xml = f"""<w:tblCellMar {nsdecls("w")}>
-        <w:top w:w="{margin_val}" w:type="{unit}"/>
-        <w:left w:w="{margin_val}" w:type="{unit}"/>
-        <w:bottom w:w="{margin_val}" w:type="{unit}"/>
-        <w:right w:w="{margin_val}" w:type="{unit}"/>
-    </w:tblCellMar>"""
+    # 2. 单元格级边距 — 覆盖原文档单元格/表格样式自带的 tcMar
+    for row in table.rows:
+        for cell in row.cells:
+            tc = cell._tc  # noqa: SLF001
+            tc_pr = tc.find(qn("w:tcPr"))
+            if tc_pr is None:
+                tc_pr = parse_xml(f'<w:tcPr {nsdecls("w")}/>')
+                tc.insert(0, tc_pr)
 
-    margins_el = parse_xml(margins_xml)
-    tbl_pr.append(margins_el)
+            for old in tc_pr.findall(qn("w:tcMar")):
+                tc_pr.remove(old)
+
+            tc_mar = parse_xml(_margins_xml("tcMar"))
+            # schema 顺序：tcMar 必须在 textDirection/tcFitText/vAlign/hideMark 之前
+            _insert_in_order(tc_pr, tc_mar,
+                             ("w:textDirection", "w:tcFitText",
+                              "w:vAlign", "w:hideMark"))
 
 
 def _apply_font_rpr(run, config: DmTableConfig):
@@ -469,26 +565,30 @@ def _set_header_format(cell, config: DmTableConfig):
             sz.set(qn("w:val"), str(int(config.header_size * 2)))
 
     # 表头背景色
+    # 兼容 ""（前端默认）和 "none"（Python 默认）均表示不设置背景色
     if config.header_bg_color and config.header_bg_color != "none":
-        for cell_el in cell._tc:  # noqa: SLF001
-            tc_pr = cell_el.find(qn("w:tcPr"))
-            if tc_pr is None:
-                tc_pr = parse_xml(f'<w:tcPr {nsdecls("w")}/>')
-                cell_el.insert(0, tc_pr)
+        tc = cell._tc  # noqa: SLF001
+        tc_pr = tc.find(qn("w:tcPr"))
+        if tc_pr is None:
+            tc_pr = parse_xml(f'<w:tcPr {nsdecls("w")}/>')
+            tc.insert(0, tc_pr)
 
-            # 删除旧底纹
-            for old in tc_pr.findall(qn("w:shd")):
-                tc_pr.remove(old)
+        # 删除旧底纹
+        for old in tc_pr.findall(qn("w:shd")):
+            tc_pr.remove(old)
 
-            color = config.header_bg_color.lstrip("#")
-            shd = parse_xml(
-                f'<w:shd {nsdecls("w")} w:fill="{color}" w:val="clear"/>'
-            )
-            tc_pr.append(shd)
+        color = config.header_bg_color.lstrip("#")
+        shd = parse_xml(
+            f'<w:shd {nsdecls("w")} w:fill="{color}" w:val="clear"/>'
+        )
+        # schema 顺序：shd 必须在 noWrap/tcMar/vAlign 之前
+        _insert_in_order(tc_pr, shd,
+                         ("w:noWrap", "w:tcMar", "w:textDirection",
+                          "w:tcFitText", "w:vAlign", "w:hideMark"))
 
 
 def _set_body_format(cell, config: DmTableConfig):
-    """设置正文单元格格式：应用全局字形 + 字体/字号（与表头使用相同设置）。"""
+    """设置正文单元格格式：应用全局字形 + 字体/字号（与表头使用相同设置）+ 背景色。"""
     for para in cell.paragraphs:
         for run in para.runs:
             # 1. 全局字形
@@ -515,6 +615,27 @@ def _set_body_format(cell, config: DmTableConfig):
                 sz = parse_xml(f'<w:sz {nsdecls("w")}/>')
                 rpr.append(sz)
             sz.set(qn("w:val"), str(int(config.header_size * 2)))
+
+    # 正文背景色（与表头相同的逻辑）
+    if config.body_bg_color and config.body_bg_color != "none":
+        tc = cell._tc  # noqa: SLF001
+        tc_pr = tc.find(qn("w:tcPr"))
+        if tc_pr is None:
+            tc_pr = parse_xml(f'<w:tcPr {nsdecls("w")}/>')
+            tc.insert(0, tc_pr)
+
+        # 删除旧底纹
+        for old in tc_pr.findall(qn("w:shd")):
+            tc_pr.remove(old)
+
+        color = config.body_bg_color.lstrip("#")
+        shd = parse_xml(
+            f'<w:shd {nsdecls("w")} w:fill="{color}" w:val="clear"/>'
+        )
+        # schema 顺序：shd 必须在 noWrap/tcMar/vAlign 之前
+        _insert_in_order(tc_pr, shd,
+                         ("w:noWrap", "w:tcMar", "w:textDirection",
+                          "w:tcFitText", "w:vAlign", "w:hideMark"))
 
 
 def _set_cell_alignment(cell, config: DmTableConfig):
@@ -574,26 +695,64 @@ def _set_cell_alignment(cell, config: DmTableConfig):
         ppr.append(jc)
 
 
-def _apply_cell_line_spacing(cell, config: DmTableConfig):
-    """Apply line spacing to all paragraphs in a table cell.
+def _pt_from_unit(value: float, unit: str) -> float:
+    """将值转换为磅（pt）。
 
-    Set line_spacing_rule before line_spacing so python-docx interprets
-    the value with the correct rule, avoiding value misinterpretation
-    when the paragraph inherits a different rule from the Normal style.
+    Support:
+        "pt" — 原值
+        "cm" — 1 cm ≈ 28.3465 pt
+        "mm" — 1 mm ≈ 2.83465 pt
     """
+    if unit == "cm":
+        return value * 28.3465
+    if unit == "mm":
+        return value * 2.83465
+    return value  # pt (default)
+
+
+def _apply_cell_line_spacing(cell, config: DmTableConfig):
+    """Apply line spacing to all paragraphs in a table cell using raw XML.
+
+    Directly writes w:spacing/w:line + w:lineRule onto the paragraph element,
+    bypassing python-docx paragraph_format.line_spacing which is unreliable
+    for paragraphs inside table cells.
+
+    OpenXML logic:
+        multiple (auto): w:line = value × 240 twips,  w:lineRule = "auto"
+        fixed (exact):   w:line = pt × 20 twips,       w:lineRule = "exact"
+        at_least:        w:line = pt × 20 twips,       w:lineRule = "atLeast"
+    """
+    mode = config.line_spacing_mode
+    value = config.line_spacing
+    unit = getattr(config, "line_spacing_unit", "pt")
+
+    if mode == "fixed":
+        line_twips = str(int(round(_pt_from_unit(value, unit) * 20)))
+        line_rule = "exact"
+    elif mode == "at_least":
+        line_twips = str(int(round(_pt_from_unit(value, unit) * 20)))
+        line_rule = "atLeast"
+    else:  # multiple
+        line_twips = str(int(round(value * 240)))
+        line_rule = "auto"
+
     for para in cell.paragraphs:
-        pf = para.paragraph_format
-        mode = config.line_spacing_mode
-        value = config.line_spacing
-        if mode == "fixed":
-            pf.line_spacing_rule = WD_LINE_SPACING.EXACTLY
-            pf.line_spacing = Pt(value)
-        elif mode == "at_least":
-            pf.line_spacing_rule = WD_LINE_SPACING.AT_LEAST
-            pf.line_spacing = Pt(value)
+        pPr = para._element.get_or_add_pPr()
+        # 清除旧的 w:spacing 元素
+        old_sp = pPr.find(qn("w:spacing"))
+        if old_sp is not None:
+            pPr.remove(old_sp)
+        # 新建 w:spacing 并用 line/lineRule 替换
+        sp = OxmlElement("w:spacing")
+        sp.set(qn("w:line"), line_twips)
+        sp.set(qn("w:lineRule"), line_rule)
+        # 将 w:spacing 插入到 w:ind 之前（OOXML 规范要求 w:spacing 在 w:ind 之前）
+        # 否则 Word 可能忽略行距设置
+        ind = pPr.find(qn("w:ind"))
+        if ind is not None:
+            pPr.insert(pPr.index(ind), sp)
         else:
-            pf.line_spacing_rule = WD_LINE_SPACING.MULTIPLE
-            pf.line_spacing = value
+            pPr.append(sp)
 
 
 def _override_header_cell_align_center(cell):

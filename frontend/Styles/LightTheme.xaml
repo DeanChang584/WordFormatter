@@ -11,8 +11,8 @@
          ============================================================ -->
 
     <!-- ── Navigation Bar ───────────────────────────────────── -->
-    <SolidColorBrush x:Key="NavBarBackground" Color="#FAFAFA" />
-    <SolidColorBrush x:Key="NavItemSelectedBackground" Color="#E8F0FE" />
+    <SolidColorBrush x:Key="NavBarBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="NavItemSelectedBackground" Color="#FAFAFA" />
     <SolidColorBrush x:Key="NavItemSelectedForeground" Color="#005FBA" />
     <SolidColorBrush x:Key="NavItemHoverBackground" Color="#F5F5F5" />
     <SolidColorBrush x:Key="NavItemDefaultIcon" Color="#605E5C" />

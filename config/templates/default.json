@@ -199,8 +199,10 @@
       "borderWidth": 0.5,
       "cellAlignH": "left",
       "cellAlignV": "center",
-      "cellMargin": 0.19,
-      "cellMarginUnit": "cm",
+      "cellMarginH": 0.19,
+      "cellMarginHUnit": "cm",
+      "cellMarginV": 0.0,
+      "cellMarginVUnit": "cm",
       "indentType": "none",
       "indentValue": 0.0,
       "indentUnit": "字符",
@@ -210,6 +212,7 @@
       "rowHeightMode": "auto",
       "rowHeight": 0.8,
       "rowHeightUnit": "cm",
+      "lineSpacingUnit": "pt",
       "autoSplit": true,
       "repeatHeader": false
     }
